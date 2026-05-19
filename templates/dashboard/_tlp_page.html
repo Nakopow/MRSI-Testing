@@ -1,0 +1,38 @@
+<section class="page {% if active_page == 'tlp' %}active{% endif %}" id="page-tlp">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>TLP & Newsletter</h2>
+      <p>Thought leadership packs and social copy presented in the same panel system as the reference.</p>
+    </div>
+    <button class="btn btn-purple" type="button"><i class="ti ti-sparkles"></i> Generate New Content</button>
+  </div>
+
+  {% for topic_key, payload in tlp.items() %}
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-bulb panel-icon-purple"></i>
+      <div class="panel-title">{{ topic_key|upper }} Thought Leadership Pack</div>
+    </div>
+    {% for piece in payload.get("pieces", []) %}
+    <div class="platform-row">
+      <div class="p-icon pi-li"><i class="ti ti-send"></i></div>
+      <div class="p-info">
+        <div class="p-name">{{ piece.get("platform", "Platform") }}</div>
+        <div class="p-status">{{ piece.get("angle", "Generated content") }}</div>
+      </div>
+      <span class="sched-badge">{{ piece.get("format", "Ready") }}</span>
+      <button class="btn-sm btn-sm-lime" type="button"><i class="ti ti-player-play"></i> Post Now</button>
+      <button class="btn-sm" type="button"><i class="ti ti-edit"></i> Edit</button>
+    </div>
+    {% endfor %}
+  </section>
+  {% else %}
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-bulb panel-icon-purple"></i>
+      <div class="panel-title">No TLP payloads yet</div>
+    </div>
+    <div class="empty-state">Run the TLP pipeline and the generated pieces will appear here.</div>
+  </section>
+  {% endfor %}
+</section>

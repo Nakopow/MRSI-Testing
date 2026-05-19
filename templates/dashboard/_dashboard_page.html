@@ -1,0 +1,107 @@
+<section class="page {% if active_page == 'dashboard' %}active{% endif %}" id="page-dashboard">
+  <div class="topic-filter-row">
+    <div class="topic-filter-label">Topics</div>
+    <button class="topic-chip active" type="button" data-topic-filter>
+      <i class="ti ti-layout-grid"></i> All
+    </button>
+    {% for card in topic_cards %}
+    <button class="topic-chip" type="button" data-topic-filter>{{ card.label }}</button>
+    {% endfor %}
+    <button class="topic-chip-add" type="button">
+      <i class="ti ti-plus"></i> Add Topic
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text"><strong>Pipeline status:</strong> dashboard is live and reading your latest generated artifacts.</div>
+    <div class="status-time">{{ latest_run }}</div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Active Topics</div>
+      <div class="metric-value">{{ metrics.topics }}</div>
+      <div class="metric-change">From output.txt</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Insight Docs</div>
+      <div class="metric-value">{{ metrics.insights }}</div>
+      <div class="metric-change">Latest folder count</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">TLP Docs</div>
+      <div class="metric-value">{{ metrics.tlp_docs }}</div>
+      <div class="metric-change">Generated packs</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Social Pieces</div>
+      <div class="metric-value">{{ metrics.social_pieces }}</div>
+      <div class="metric-change">Across all TLP payloads</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="content-grid">
+        {% for card in topic_cards %}
+        <article class="content-card">
+          <div class="card-top">
+            <span class="topic-tag {{ card.tag_class }}">{{ card.label }}</span>
+            <div class="platform-label"><i class="ti ti-file-text"></i> {{ card.sources_count }} sources</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">{{ card.title }}</div>
+            <div class="card-excerpt">{{ card.summary[0] }}</div>
+          </div>
+          <div class="card-foot">
+            <span class="badge badge-draft">{{ card.questions_count }} prompts</span>
+            <span class="badge badge-sent">{{ card.briefing_line }}</span>
+          </div>
+        </article>
+        {% else %}
+        <article class="content-card">
+          <div class="card-body">
+            <div class="card-title">No digest data yet</div>
+            <div class="card-excerpt">Run the pipeline once and this dashboard will populate with your AI, cybersecurity, and Web3 sections.</div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <div class="side-panel">
+        <div class="sp-header">
+          <span>Recent Activity</span>
+          <span class="see-all">Live</span>
+        </div>
+        {% for item in recent_activity %}
+        <div class="act-item">
+          <div class="act-ic {{ item.icon_bg }}"><i class="ti {{ item.icon }}"></i></div>
+          <div class="act-body">
+            <strong>{{ item.title }}</strong>
+            <div>{{ item.detail }}</div>
+            <div class="act-t">{{ item.time }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">No recent activity yet.</div>
+        {% endfor %}
+      </div>
+
+      <div class="side-panel">
+        <div class="sp-header">
+          <span>Next Run</span>
+          <span class="see-all">PHT</span>
+        </div>
+        <div class="next-run">
+          <div class="run-row"><span class="run-l">Digest refresh</span><span class="run-v">6:00 AM</span></div>
+          <div class="run-row"><span class="run-l">Social posting</span><span class="run-v">6:30 AM onward</span></div>
+          <div class="progress-bar"><div class="progress-fill"></div></div>
+          <div class="run-row"><span class="run-l">Last updated</span><span class="run-v">{{ latest_run }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

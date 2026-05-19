@@ -1,0 +1,44 @@
+<section class="page {% if active_page == 'insights' %}active{% endif %}" id="page-insights">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Daily Insights</h2>
+      <p>Generated briefing cards styled to match the reference layout.</p>
+    </div>
+    <button class="btn btn-purple" type="button"><i class="ti ti-file-export"></i> Export</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" type="button" data-tab>
+      All <span class="tab-n">{{ insight_files|length }}</span>
+    </button>
+    <button class="tab" type="button" data-tab>
+      Latest <span class="tab-n">{{ topic_cards|length }}</span>
+    </button>
+  </div>
+
+  <div class="content-grid">
+    {% for path in insight_files|reverse %}
+    <article class="content-card">
+      <div class="card-top">
+        <span class="topic-tag tag-ai">Insight Doc</span>
+        <div class="platform-label"><i class="ti ti-file-type-docx"></i> DOCX</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ path.name }}</div>
+        <div class="card-excerpt">Generated insight file stored in the insights folder and available for review.</div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-sm btn-sm-purple" type="button"><i class="ti ti-eye"></i> Preview</button>
+        <button class="btn-sm" type="button"><i class="ti ti-download"></i> Download</button>
+      </div>
+    </article>
+    {% else %}
+    <article class="content-card">
+      <div class="card-body">
+        <div class="card-title">No insight documents yet</div>
+        <div class="card-excerpt">Once the pipeline generates `insights/*.docx`, they will appear here.</div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>

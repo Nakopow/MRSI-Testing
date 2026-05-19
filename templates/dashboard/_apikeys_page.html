@@ -1,0 +1,33 @@
+<section class="page {% if active_page == 'apikeys' %}active{% endif %}" id="page-apikeys">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>API Keys</h2>
+      <p>Your environment status is shown in the same card format as the reference design.</p>
+    </div>
+  </div>
+
+  {% for api in api_keys %}
+  <section class="api-card">
+    <div class="api-head">
+      <div class="api-logo" style="{{ api.logo_style }}">{{ api.logo }}</div>
+      <div class="api-info">
+        <div class="api-name">{{ api.name }}</div>
+        <div class="api-desc">{{ api.description }}</div>
+      </div>
+      <div class="cb {{ 'cb-yes' if api.connected else 'cb-no' }}">
+        {% if api.connected %}
+        <i class="ti ti-check api-check-icon"></i> Connected
+        {% else %}
+        Not connected
+        {% endif %}
+      </div>
+    </div>
+    <div class="api-body">
+      <div class="key-wrap">
+        <input class="form-input" type="text" value="{{ api.value }}" readonly>
+        <button class="btn" type="button"><i class="ti ti-refresh"></i> Test</button>
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+</section>

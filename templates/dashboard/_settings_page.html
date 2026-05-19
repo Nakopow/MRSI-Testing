@@ -1,0 +1,42 @@
+<section class="page {% if active_page == 'settings' %}active{% endif %}" id="page-settings">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Brand Settings</h2>
+      <p>Configure your brand identity with the same form treatment as the mockup.</p>
+    </div>
+    <button class="btn btn-purple" type="button"><i class="ti ti-device-floppy"></i> Save Changes</button>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-building panel-icon-purple"></i>
+      <div class="panel-title">Brand Identity</div>
+    </div>
+    <div class="settings-grid">
+      <div class="form-row">
+        <label class="form-label">Brand Name</label>
+        <input class="form-input" value="ExoAsia">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Industry</label>
+        <input class="form-input" value="Market Research">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Primary Color</label>
+        <input class="form-input" value="#6B3FA0">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Run Date</label>
+        <input class="form-input" value="{{ now_label }}">
+      </div>
+      <div class="form-row form-span-full">
+        <label class="form-label">Positioning</label>
+        <textarea class="form-input form-textarea">Market Research and Strategic Insight dashboard for daily briefs, thought leadership, and publishing operations.</textarea>
+      </div>
+      <div class="form-row form-span-full">
+        <label class="form-label">Output Summary</label>
+        <input class="form-input" value="{{ metrics.insights }} insight docs · {{ metrics.tlp_docs }} TLP docs · {{ metrics.social_pieces }} social pieces">
+      </div>
+    </div>
+  </section>
+</section>

@@ -1,0 +1,29 @@
+{
+  "ai": [
+    "https://techcrunch.com/feed/",
+    "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+    "https://www.artificialintelligence-news.com/feed/",
+    "https://www.technologyreview.com/feed/",
+    "https://venturebeat.com/feed/",
+    "https://www.wired.com/feed/tag/ai/latest/rss",
+    "https://techwireasia.com/category/artificial-intelligence/feed/",
+    "https://opengovasia.com/feed/"
+  ],
+  "cybersecurity": [
+    "https://feeds.feedburner.com/TheHackersNews",
+    "https://bleepingcomputer.com/feed/",
+    "https://www.darkreading.com/rss.xml",
+    "https://threatpost.com/feed/",
+    "https://cybersecurityasia.net/feed",
+    "https://aseantechsec.com/category/cyber-security/feed/"
+  ],
+  "web3": [
+    "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "https://decrypt.co/feed",
+    "https://cryptoslate.com/feed/",
+    "https://blockworks.co/rss",
+    "https://www.coinbureau.com/feed/",
+    "https://beincrypto.com/feed/",
+    "https://bitpinas.com/feed/"
+  ]
+}

@@ -1,0 +1,28 @@
+<section class="page {% if active_page == 'autopost' %}active{% endif %}" id="page-autopost">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Auto-post Settings</h2>
+      <p>Control platform posting behavior while preserving the same sidebar, rows, and buttons as the mockup.</p>
+    </div>
+    <button class="btn btn-purple" type="button"><i class="ti ti-device-floppy"></i> Save Settings</button>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-rocket panel-icon-purple"></i>
+      <div class="panel-title">Platform Connections</div>
+    </div>
+    {% for row in platform_rows %}
+    <div class="platform-row">
+      <div class="p-icon {{ row.icon_class }}"><i class="ti {{ row.icon }}"></i></div>
+      <div class="p-info">
+        <div class="p-name">{{ row.platform }}</div>
+        <div class="p-status">{{ row.topic }} · {{ row.note }}</div>
+      </div>
+      <span class="toggle-lbl">Auto-post</span>
+      <button class="toggle on" type="button" data-toggle aria-label="Toggle auto-post"></button>
+      <div class="sched-badge">Configured</div>
+    </div>
+    {% endfor %}
+  </section>
+</section>

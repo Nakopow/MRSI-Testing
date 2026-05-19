@@ -1,0 +1,8 @@
+requests
+beautifulsoup4
+lxml
+feedparser
+google-genai
+python-dotenv
+urllib3
+flask

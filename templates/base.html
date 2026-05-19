@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MRSI Platform - by ExoAsia{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body data-active-page="{{ active_page }}">
+  <aside class="nav-sidebar">
+    <div class="logo-area">
+      <div class="logo-mark">
+        <div class="logo-icon">MR</div>
+        <div class="logo-text">MRSI Platform</div>
+      </div>
+      <div class="logo-sub">By ExoAsia</div>
+    </div>
+
+    <div class="brand-switcher">
+      <div class="brand-av">EA</div>
+      <div class="brand-av-name">ExoAsia Research</div>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+
+    <nav>
+      <div class="nav-group">Workspace</div>
+
+      <a class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard.dashboard') }}">
+        <i class="ti ti-layout-dashboard"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'insights' %}active{% endif %}" href="{{ url_for('dashboard.insights') }}">
+        <i class="ti ti-file-analytics"></i>
+        <span>Daily Insights</span>
+        <span class="nav-badge">{{ metrics.insights }}</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'tlp' %}active{% endif %}" href="{{ url_for('dashboard.tlp_page') }}">
+        <i class="ti ti-bulb"></i>
+        <span>TLP & Newsletter</span>
+        <span class="nav-badge lime">{{ metrics.social_pieces }}</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'autopost' %}active{% endif %}" href="{{ url_for('dashboard.autopost') }}">
+        <i class="ti ti-rocket"></i>
+        <span>Auto-post</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'schedule' %}active{% endif %}" href="{{ url_for('dashboard.schedule') }}">
+        <i class="ti ti-calendar-time"></i>
+        <span>Schedule</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'apikeys' %}active{% endif %}" href="{{ url_for('dashboard.apikeys') }}">
+        <i class="ti ti-key"></i>
+        <span>API Keys</span>
+      </a>
+
+      <a class="nav-item {% if active_page == 'settings' %}active{% endif %}" href="{{ url_for('dashboard.settings') }}">
+        <i class="ti ti-adjustments"></i>
+        <span>Brand Settings</span>
+      </a>
+    </nav>
+
+    <div class="nav-footer">
+      <div class="user-av">EA</div>
+      <div>
+        <div class="user-n">ExoAsia</div>
+        <div class="user-r">Research Ops</div>
+      </div>
+      <i class="ti ti-settings"></i>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        Workspace
+        <i class="ti ti-chevron-right"></i>
+        <span>{{ active_page_title }}</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" type="button" onclick="window.location.reload()">
+          <i class="ti ti-refresh"></i> Refresh
+        </button>
+        <button class="btn btn-lime" type="button">
+          <i class="ti ti-player-play"></i> Run Pipeline
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,39 @@
+<section class="page {% if active_page == 'schedule' %}active{% endif %}" id="page-schedule">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Schedule</h2>
+      <p>Set when the pipeline runs and when content goes live per platform.</p>
+    </div>
+    <button class="btn btn-purple" type="button"><i class="ti ti-device-floppy"></i> Save</button>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-cpu panel-icon-purple"></i>
+      <div class="panel-title">Pipeline Run Schedule</div>
+    </div>
+    <div class="time-grid">
+      <div class="time-slot on"><i class="ti ti-clock"></i><div><div class="ts-l">Daily Run</div><div class="ts-t">6:00 AM PHT</div></div></div>
+      <div class="time-slot"><i class="ti ti-calendar"></i><div><div class="ts-l">Weekly Only</div><div class="ts-t">Mon 6:00 AM</div></div></div>
+      <div class="time-slot"><i class="ti ti-player-play"></i><div><div class="ts-l">Manual Only</div><div class="ts-t">On-demand</div></div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <i class="ti ti-send panel-icon-lime"></i>
+      <div class="panel-title">Posting Windows</div>
+    </div>
+    <div class="time-grid">
+      {% for row in platform_rows[:6] %}
+      <div class="time-slot on">
+        <i class="ti {{ row.icon }}"></i>
+        <div>
+          <div class="ts-l">{{ row.platform }}</div>
+          <div class="ts-t">{{ row.note[:28] ~ ('...' if row.note|length > 28 else '') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
