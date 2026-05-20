@@ -420,7 +420,8 @@ function triggerGenerate() {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ platforms: ['LinkedIn','YouTube / Video Script','Instagram Carousel','Facebook','TikTok'],
-                           topics: ['ai','cybersecurity','web3'] })
+                           topics: ['ai','cybersecurity','web3'],
+                           include_tlp: false })
   })
   .then(r => r.json())
   .then(data => {
