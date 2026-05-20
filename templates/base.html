@@ -34,13 +34,14 @@
         <span>Dashboard</span>
       </a>
 
-      <a class="nav-item {% if active_page == 'insights' %}active{% endif %}" href="{{ url_for('dashboard.insights') }}">
+      <a class="nav-item {% if active_page == 'insights' %}active{% endif %}" href="/v2/insights">
         <i class="ti ti-file-analytics"></i>
         <span>Daily Insights</span>
         <span class="nav-badge">{{ metrics.insights }}</span>
       </a>
 
-      <a class="nav-item {% if active_page == 'tlp' %}active{% endif %}" href="{{ url_for('dashboard.tlp_page') }}">
+      <a class="nav-item {% if active_page == 'tlp' %}active{% endif %}" href="/v2/tlp"
+      >
         <i class="ti ti-bulb"></i>
         <span>TLP & Newsletter</span>
         <span class="nav-badge lime">{{ metrics.social_pieces }}</span>
