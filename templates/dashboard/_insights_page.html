@@ -4,7 +4,16 @@
       <h2>Daily Insights</h2>
       <p>Generated briefing cards styled to match the reference layout.</p>
     </div>
-    <button class="btn btn-purple" type="button"><i class="ti ti-file-export"></i> Export</button>
+    <div class="page-header-right">
+      {% if insight_files %}
+      <button class="btn btn-lime" type="button" onclick="downloadAllInsights()">
+        <i class="ti ti-download"></i> Download All (ZIP)
+      </button>
+      {% endif %}
+      <button class="btn btn-purple" type="button" onclick="window.location.href='/v2/insights'">
+        <i class="ti ti-file-export"></i> Export
+      </button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -28,8 +37,12 @@
         <div class="card-excerpt">Generated insight file stored in the insights folder and available for review.</div>
       </div>
       <div class="card-foot">
-        <button class="btn-sm btn-sm-purple" type="button"><i class="ti ti-eye"></i> Preview</button>
-        <button class="btn-sm" type="button"><i class="ti ti-download"></i> Download</button>
+        <button class="btn-sm btn-sm-purple" type="button" onclick="previewInsight('{{ path.name }}')">
+          <i class="ti ti-eye"></i> Preview
+        </button>
+        <button class="btn-sm" type="button" onclick="downloadInsight('{{ path.name }}')">
+          <i class="ti ti-download"></i> Download
+        </button>
       </div>
     </article>
     {% else %}

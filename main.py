@@ -142,7 +142,7 @@ def run_formatter(output_txt: str) -> None:
     print(f"\n  Daily Insight formatter done. {success_count}/{len(topics)} .docx file(s) written to insights/")
 
 
-def run_tl_pipeline(output_txt: str) -> None:
+def run_tl_pipeline(output_txt: str, platforms: list = None, topic: str = None) -> None:
     """
     Runs the Thought Leadership pipeline after the daily digest is ready.
 
@@ -150,6 +150,13 @@ def run_tl_pipeline(output_txt: str) -> None:
               generates images via Hugging Face, saves tl_output_{topic}.json.
     Step 2 — tl_formatter: reads each JSON file, builds branded .docx files
               in the TLPs folder.
+
+    Args:
+        output_txt: Path to the daily digest file
+        platforms: Optional list of platform names to generate (e.g., ['linkedin', 'instagram']).
+                   If None, generates for all platforms.
+        topic: Optional topic to generate for (e.g., 'ai', 'cybersecurity', 'web3').
+               If None or 'all', generates for all topics.
 
     Always runs — raises on critical failures instead of silently skipping.
     """

@@ -2,19 +2,34 @@
   <div class="page-header">
     <div class="page-header-left">
       <h2>API Keys</h2>
-      <p>Your environment status is shown in the same card format as the reference design.</p>
+      <p>Manage your API keys for the pipeline. Keys are stored securely and used for AI processing.</p>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-purple" type="button" onclick="saveAllKeys()">
+        <i class="ti ti-device-floppy"></i> Save All Keys
+      </button>
+    </div>
+  </div>
+
+  <div class="api-keys-info">
+    <div class="info-banner">
+      <i class="ti ti-info-circle"></i>
+      <div>
+        <strong>API Key Storage:</strong>
+        <span id="storageInfo">Loading...</span>
+      </div>
     </div>
   </div>
 
   {% for api in api_keys %}
-  <section class="api-card">
+  <section class="api-card" data-api-key="{{ api.name | lower | replace(' ', '_') }}">
     <div class="api-head">
       <div class="api-logo" style="{{ api.logo_style }}">{{ api.logo }}</div>
       <div class="api-info">
         <div class="api-name">{{ api.name }}</div>
         <div class="api-desc">{{ api.description }}</div>
       </div>
-      <div class="cb {{ 'cb-yes' if api.connected else 'cb-no' }}">
+      <div class="cb {{ 'cb-yes' if api.connected else 'cb-no' }}" id="status-{{ api.name | lower | replace(' ', '_') }}">
         {% if api.connected %}
         <i class="ti ti-check api-check-icon"></i> Connected
         {% else %}
@@ -24,10 +39,35 @@
     </div>
     <div class="api-body">
       <div class="key-wrap">
-        <input class="form-input" type="text" value="{{ api.value }}" readonly>
-        <button class="btn" type="button"><i class="ti ti-refresh"></i> Test</button>
+        <div class="key-input-group">
+          <input class="form-input api-key-input" 
+                 type="password" 
+                 id="input-{{ api.name | lower | replace(' ', '_') }}"
+                 placeholder="Enter your {{ api.name }} API key"
+                 data-key-name="{{ api.name | upper | replace(' ', '_') }}">
+          <button class="btn btn-sm" type="button" onclick="toggleKeyVisibility(this)" title="Show/Hide key">
+            <i class="ti ti-eye"></i>
+          </button>
+        </div>
+        <button class="btn" type="button" onclick="testApiKey('{{ api.name | lower | replace(' ', '_') }}')">
+          <i class="ti ti-refresh"></i> Test
+        </button>
+        <button class="btn btn-sm" type="button" onclick="clearKey('{{ api.name | lower | replace(' ', '_') }}')" title="Clear key">
+          <i class="ti ti-x"></i>
+        </button>
       </div>
+      <div class="key-status" id="test-status-{{ api.name | lower | replace(' ', '_') }}"></div>
     </div>
   </section>
   {% endfor %}
+
+  <div class="api-keys-note">
+    <h4><i class="ti ti-shield-check"></i> Security Notes</h4>
+    <ul>
+      <li>API keys are encrypted and stored securely</li>
+      <li>Keys are only used for pipeline processing</li>
+      <li>You can update or remove keys at any time</li>
+      <li>Changes take effect immediately for new pipeline runs</li>
+    </ul>
+  </div>
 </section>

@@ -89,9 +89,51 @@
         <button class="btn" type="button" onclick="window.location.reload()">
           <i class="ti ti-refresh"></i> Refresh
         </button>
-        <button class="btn btn-lime" type="button">
-          <i class="ti ti-player-play"></i> Run Pipeline
-        </button>
+        <div class="pipeline-dropdown">
+          <button class="btn btn-lime" type="button" id="pipelineMenuBtn" onclick="togglePipelineMenu()">
+            <i class="ti ti-player-play"></i> Pipeline
+            <i class="ti ti-chevron-down" style="margin-left: 4px;"></i>
+          </button>
+          <div class="pipeline-menu" id="pipelineMenu">
+            <button class="pipeline-menu-item" onclick="runPipelineStep('scrape')">
+              <i class="ti ti-rss"></i>
+              <div class="menu-item-text">
+                <strong>Scrape Articles</strong>
+                <span>Fetch RSS feeds and save article files</span>
+              </div>
+            </button>
+            <button class="pipeline-menu-item" onclick="runPipelineStep('summarize')">
+              <i class="ti ti-file-analytics"></i>
+              <div class="menu-item-text">
+                <strong>Generate Digest</strong>
+                <span>Create AI summary from scraped articles</span>
+              </div>
+            </button>
+            <div class="pipeline-menu-divider"></div>
+            <button class="pipeline-menu-item" onclick="runPipelineStep('insights')">
+              <i class="ti ti-file-text"></i>
+              <div class="menu-item-text">
+                <strong>Generate Daily Insights</strong>
+                <span>Create branded DOCX files per topic</span>
+              </div>
+            </button>
+            <button class="pipeline-menu-item" onclick="runPipelineStep('tlp')">
+              <i class="ti ti-bulb"></i>
+              <div class="menu-item-text">
+                <strong>Generate TLPs</strong>
+                <span>Create Thought Leadership content packs</span>
+              </div>
+            </button>
+            <div class="pipeline-menu-divider"></div>
+            <button class="pipeline-menu-item full-pipeline" onclick="runPipelineStep('run-all')">
+              <i class="ti ti-rocket"></i>
+              <div class="menu-item-text">
+                <strong>Run Full Pipeline</strong>
+                <span>Execute all steps in sequence</span>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

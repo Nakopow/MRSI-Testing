@@ -4,7 +4,98 @@
       <h2>TLP & Newsletter</h2>
       <p>Thought leadership packs and social copy presented in the same panel system as the reference.</p>
     </div>
-    <button class="btn btn-purple" type="button"><i class="ti ti-sparkles"></i> Generate New Content</button>
+    <div class="page-header-right">
+      <button class="btn btn-purple" type="button" onclick="showTLPGenerateModal()">
+        <i class="ti ti-sparkles"></i> Generate New Content
+      </button>
+    </div>
+  </div>
+
+  <!-- Platform Selection Modal -->
+  <div class="modal-overlay" id="tlpModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Generate TLP Content</h3>
+        <button class="modal-close" onclick="closeTLPGenerateModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Select the social media platforms you want to generate content for:</p>
+        
+        <div class="platform-selection">
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="linkedin" checked>
+            <span class="platform-icon pi-li"><i class="ti ti-brand-linkedin"></i></span>
+            <span class="platform-name">LinkedIn</span>
+            <span class="platform-desc">Professional articles and posts</span>
+          </label>
+          
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="instagram">
+            <span class="platform-icon pi-ig"><i class="ti ti-brand-instagram"></i></span>
+            <span class="platform-name">Instagram</span>
+            <span class="platform-desc">Visual stories and reels</span>
+          </label>
+          
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="facebook">
+            <span class="platform-icon pi-fb"><i class="ti ti-brand-facebook"></i></span>
+            <span class="platform-name">Facebook</span>
+            <span class="platform-desc">Page posts and updates</span>
+          </label>
+          
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="twitter">
+            <span class="platform-icon pi-tt"><i class="ti ti-brand-twitter"></i></span>
+            <span class="platform-name">Twitter / X</span>
+            <span class="platform-desc">Short-form threads and posts</span>
+          </label>
+          
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="whatsapp">
+            <span class="platform-icon pi-wp"><i class="ti ti-brand-whatsapp"></i></span>
+            <span class="platform-name">WhatsApp</span>
+            <span class="platform-desc">Broadcast messages</span>
+          </label>
+          
+          <label class="platform-checkbox">
+            <input type="checkbox" name="platform" value="mailchimp">
+            <span class="platform-icon pi-ml"><i class="ti ti-mail"></i></span>
+            <span class="platform-name">Newsletter</span>
+            <span class="platform-desc">Email campaign content</span>
+          </label>
+        </div>
+        
+        <div class="topic-selection">
+          <p class="section-label">Select Topic:</p>
+          <div class="topic-chips">
+            <label class="topic-chip-label">
+              <input type="radio" name="tlp_topic" value="ai" checked>
+              <span>AI</span>
+            </label>
+            <label class="topic-chip-label">
+              <input type="radio" name="tlp_topic" value="cybersecurity">
+              <span>Cybersecurity</span>
+            </label>
+            <label class="topic-chip-label">
+              <input type="radio" name="tlp_topic" value="web3">
+              <span>Web3</span>
+            </label>
+            <label class="topic-chip-label">
+              <input type="radio" name="tlp_topic" value="all">
+              <span>All Topics</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeTLPGenerateModal()">Cancel</button>
+        <button class="btn btn-lime" onclick="generateTLPContent()">
+          <i class="ti ti-sparkles"></i> Generate Selected
+        </button>
+      </div>
+    </div>
   </div>
 
   {% for topic_key, payload in tlp.items() %}
@@ -12,10 +103,11 @@
     <div class="panel-header">
       <i class="ti ti-bulb panel-icon-purple"></i>
       <div class="panel-title">{{ topic_key|upper }} Thought Leadership Pack</div>
+      <span class="sched-badge">{{ payload.get("pieces", [])|length }} pieces</span>
     </div>
     {% for piece in payload.get("pieces", []) %}
     <div class="platform-row">
-      <div class="p-icon pi-li"><i class="ti ti-send"></i></div>
+      <div class="p-icon {{ piece.get('icon_class', 'pi-li') }}"><i class="ti {{ piece.get('icon', 'ti-send') }}"></i></div>
       <div class="p-info">
         <div class="p-name">{{ piece.get("platform", "Platform") }}</div>
         <div class="p-status">{{ piece.get("angle", "Generated content") }}</div>
@@ -23,6 +115,9 @@
       <span class="sched-badge">{{ piece.get("format", "Ready") }}</span>
       <button class="btn-sm btn-sm-lime" type="button"><i class="ti ti-player-play"></i> Post Now</button>
       <button class="btn-sm" type="button"><i class="ti ti-edit"></i> Edit</button>
+      <button class="btn-sm" type="button" onclick="downloadTLPPiece('{{ topic_key }}', '{{ piece.get("platform", "") }}')">
+        <i class="ti ti-download"></i>
+      </button>
     </div>
     {% endfor %}
   </section>
@@ -32,7 +127,12 @@
       <i class="ti ti-bulb panel-icon-purple"></i>
       <div class="panel-title">No TLP payloads yet</div>
     </div>
-    <div class="empty-state">Run the TLP pipeline and the generated pieces will appear here.</div>
+    <div class="empty-state">
+      <p>Run the TLP pipeline and the generated pieces will appear here.</p>
+      <button class="btn btn-purple" type="button" onclick="showTLPGenerateModal()">
+        <i class="ti ti-sparkles"></i> Generate Content
+      </button>
+    </div>
   </section>
   {% endfor %}
 </section>

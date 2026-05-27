@@ -85,6 +85,9 @@ scraper.log
 cache/
 .url_cache.json
 
+# Pipeline state
+.pipeline_state.json
+
 # API Keys (never commit these)
 *.pem
 *.key
