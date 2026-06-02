@@ -2,8 +2,25 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/keys.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11"
+      }
+    },
+    {
+      "src": "api/pipeline.py",
+      "use": "@vercel/python",
+      "config": {
+        "runtime": "python3.11"
+      }
     },
     {
       "src": "static/**",
@@ -16,20 +33,20 @@
       "dest": "static/$1"
     },
     {
+      "src": "/api/keys",
+      "dest": "api/keys.py"
+    },
+    {
+      "src": "/api/pipeline",
+      "dest": "api/pipeline.py"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "api/$1"
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.11"
-  },
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }

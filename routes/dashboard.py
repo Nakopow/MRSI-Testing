@@ -6,6 +6,9 @@ from flask import Blueprint, render_template
 
 from main import TOPIC_LABELS, extract_posting_windows, load_tlp_payloads, parse_digest_sections
 
+# Sample content fallback for when output.txt doesn't exist (e.g., on Vercel)
+SAMPLE_OUTPUT_FILE = "sample_output.txt"
+
 dashboard_bp = Blueprint("dashboard", __name__)
 PAGE_TITLES = {
     "dashboard": "Dashboard",
@@ -44,7 +47,13 @@ def _platform_icon_class(platform_name: str) -> tuple[str, str]:
 
 
 def _build_dashboard_context(active_page: str = "dashboard") -> dict:
-    sections = parse_digest_sections("output.txt")
+    # Try to load output.txt, fall back to sample_output.txt if not found
+    output_file = "output.txt"
+    if not os.path.exists(output_file):
+        if os.path.exists(SAMPLE_OUTPUT_FILE):
+            output_file = SAMPLE_OUTPUT_FILE
+    
+    sections = parse_digest_sections(output_file)
     tlp = load_tlp_payloads()
     insight_files = sorted(Path("insights").glob("*.docx"))
     tlp_files = sorted(Path("TLPs").glob("*.docx"))

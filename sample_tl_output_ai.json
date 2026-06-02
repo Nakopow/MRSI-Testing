@@ -1,0 +1,86 @@
+{
+  "editorial_note": "- Angles chosen: 01=Hot take/contrarian opinion; 02=Trend prediction/future scenarios; 03=Myth-busting; 04=Storytelling/narrative arc; 05=What most people get wrong\n- Mix rationale: These angles provide diverse perspectives on Claude 4's release, from challenging assumptions about AI safety to predicting market shifts and educating on practical implications.",
+  "pieces": [
+    {
+      "number": "01",
+      "platform": "LinkedIn",
+      "angle": "Hot take/contrarian opinion",
+      "format": "Text-only post. No link in body - drop URL in first comment. 150-250 words.",
+      "objective": "To challenge the prevailing narrative that Claude 4 is just another incremental AI upgrade, positioning it as a fundamental shift in enterprise AI adoption.",
+      "image_guidance": "No image.",
+      "posting_notes": "Optimal posting time is Tuesday/Wednesday 9-11 AM local time. Target AI decision-makers, CTOs, and enterprise strategy leads. Pin a comment with link to Anthropic's technical report.\nHashtags: #Claude4 #EnterpriseAI #AISafety #DigitalTransformation #ExoasiaMRSI",
+      "copy": "Claude 4 isn't just another AI model release. It's Anthropic's declaration that safety isn't a constraint on capability - it's the enabler. While others chase raw performance metrics, Claude 4's 200K token context window and 20% reduction in hallucination rates signal a maturation of the AI market. The real story isn't the benchmarks. It's that regulated industries - healthcare, finance, legal - now have a viable path to AI adoption that doesn't require compromising on risk management. If your enterprise AI strategy doesn't account for this safety-first paradigm shift, you're already behind.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "02",
+      "platform": "YouTube / Video Script",
+      "angle": "Trend prediction/future scenarios",
+      "format": "16:9 aspect ratio. 90 seconds. Direct, authoritative delivery.",
+      "objective": "To outline how Claude 4's capabilities will reshape enterprise AI deployment strategies over the next 12-24 months.",
+      "image_guidance": "Speaker on screen with subtle AI/tech background graphics.",
+      "posting_notes": "Video length: 75-90 seconds. Open with the 200K context window capability. Emphasize practical implications.\nHashtags: #AI #Claude4 #FutureOfWork #ExoasiaMRSI",
+      "copy": "",
+      "script": "HOOK\nA 200,000 token context window just changed everything about how enterprises will deploy AI.\n\nWHAT\nAnthropic released Claude 4 with reasoning capabilities that outpace competitors in regulated industries. This isn't about chatbots. It's about processing entire legal contracts, medical histories, or financial audits in a single prompt.\n\nWHY IS IT IMPORTANT\nThe 20% reduction in hallucination rates means enterprises can finally trust AI with mission-critical workflows. This shifts AI from experimental tool to core infrastructure.\n\nWHAT DOES THIS MEAN FOR LEADERS\nIf you're in healthcare, you can now analyze complete patient histories. If you're in finance, process entire regulatory frameworks. If you're in legal, review contracts end-to-end. Your AI strategy must evolve from pilots to production.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "03",
+      "platform": "Instagram Carousel",
+      "angle": "Myth-busting",
+      "format": "6-slide carousel. 1080x1080 pixels.",
+      "objective": "To debunk common misconceptions about AI safety features being limitations rather than enablers.",
+      "image_guidance": "Clean, professional design with bold typography.",
+      "posting_notes": "Post Thursday 2-4 PM. Use dark background with white text. Story poll: Does AI safety matter to your organization?\nHashtags: #AISafety #Claude4 #TechMyths #ExoasiaMRSI",
+      "copy": "",
+      "script": "",
+      "slides": [
+        "AI SAFETY ISN'T A LIMITATION. IT'S YOUR COMPETITIVE ADVANTAGE.",
+        "(MYTH / TRUTH):\nMYTH: Safety features slow down AI and limit what it can do.\nTRUTH: Claude 4's constitutional AI safeguards enable deployment in regulated industries where competitors can't go.",
+        "(REVEAL):\nREVEAL: The 20% reduction in hallucination rates isn't just a metric. It's the difference between experimental and production-ready AI.",
+        "(LESSON):\nLESSON: Enterprises don't need the most powerful AI. They need the most reliable AI for their specific risk tolerance.",
+        "(TIP):\nTIP: When evaluating AI providers, prioritize safety track records over raw benchmark scores. Your compliance team will thank you.",
+        "This post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how."
+      ],
+      "caption": "Think AI safety is just corporate speak? Claude 4 proves it's the key to unlocking enterprise adoption. Swipe to see why safety-first AI is winning in regulated industries. #Claude4 #AISafety #EnterpriseAI #ExoasiaMRSI",
+      "_img_b64": null
+    },
+    {
+      "number": "04",
+      "platform": "Facebook",
+      "angle": "Storytelling/narrative arc",
+      "format": "Short narrative, conversational tone. Max 100 words.",
+      "objective": "To illustrate the practical impact of Claude 4 through a relatable enterprise scenario.",
+      "image_guidance": "Professional office setting with subtle tech elements.",
+      "posting_notes": "Post Wednesday evening 7-9 PM. Target business owners and managers.\nHashtags: #AI #Business #Claude4 #ExoasiaMRSI",
+      "copy": "Last month, a healthcare provider spent 40 hours weekly reviewing patient records for compliance. Today, Claude 4 processes those same records in minutes - with higher accuracy. The 200K token context window means it can analyze complete patient histories, not just fragments. This isn't science fiction. It's happening now. What's your 40-hour task? #Claude4 #HealthcareAI #DigitalTransformation #ExoasiaMRSI\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "05",
+      "platform": "TikTok",
+      "angle": "What most people get wrong",
+      "format": "9:16 vertical. 60 seconds. Energetic talking-head.",
+      "objective": "To deliver a punchy correction to common misconceptions about AI model comparisons.",
+      "image_guidance": "Direct to camera, minimal background.",
+      "posting_notes": "Post Friday 3-5 PM. First 2 seconds: 'You're comparing AI models wrong.'\nHashtags: #AI #Claude4 #TechTok #ExoasiaMRSI",
+      "copy": "",
+      "script": "You're comparing AI models wrong. Everyone's obsessed with benchmark scores. They're asking 'Which AI is strongest?' That's the wrong question.\n\nThe right question is: Which AI can I actually deploy in my industry?\n\nClaude 4 just answered that. With 20% fewer hallucinations and constitutional AI safeguards, it's built for healthcare, finance, legal - places where mistakes cost millions.\n\nStop comparing raw power. Start comparing reliability. Your industry's regulations don't care about benchmark scores. They care about accuracy and safety.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "Stop obsessing over AI benchmarks. Start asking which AI can actually work in your industry. #Claude4 #AI #TechTok #ExoasiaMRSI",
+      "_img_b64": null
+    }
+  ],
+  "_raw": "Sample TLP content for Claude 4 briefing",
+  "_date": "June 01, 2026",
+  "_topic_key": "ai",
+  "_topic_display": "AI"
+}

@@ -130,75 +130,190 @@ def _load_insight_texts() -> dict[str, list[dict]]:
 
 
 def _generation_status() -> dict:
-    """Return a simple status dict for the last generation run."""
+    """Return a detailed status dict for the last generation run."""
     status_file = Path(".generation_status.json")
     if status_file.exists():
         try:
             with open(status_file) as f:
-                return json.load(f)
+                data = json.load(f)
+                # Ensure all expected fields exist
+                return {
+                    "running": data.get("running", False),
+                    "last_run": data.get("last_run"),
+                    "message": data.get("message", "Unknown"),
+                    "progress": data.get("progress", 0),
+                    "stage": data.get("stage", ""),
+                    "insights_generated": data.get("insights_generated", 0),
+                    "tlps_generated": data.get("tlps_generated", 0),
+                }
         except Exception:
             pass
-    return {"running": False, "last_run": None, "message": "Never run"}
+    return {
+        "running": False,
+        "last_run": None,
+        "message": "Never run",
+        "progress": 0,
+        "stage": "",
+        "insights_generated": 0,
+        "tlps_generated": 0,
+    }
 
 
-def _set_generation_status(running: bool, message: str) -> None:
+def _set_generation_status(
+    running: bool,
+    message: str,
+    progress: int = 0,
+    stage: str = "",
+    insights_generated: int = None,
+    tlps_generated: int = None,
+) -> None:
     status_file = Path(".generation_status.json")
+    existing = _generation_status()
+
     data = {
         "running": running,
-        "last_run": datetime.now().isoformat() if not running else _generation_status().get("last_run"),
+        "last_run": (
+            datetime.now().isoformat()
+            if not running
+            else existing.get("last_run")
+        ),
         "message": message,
+        "progress": progress,
+        "stage": stage,
+        "insights_generated": (
+            insights_generated
+            if insights_generated is not None
+            else existing.get("insights_generated", 0)
+        ),
+        "tlps_generated": (
+            tlps_generated
+            if tlps_generated is not None
+            else existing.get("tlps_generated", 0)
+        ),
     }
     with open(status_file, "w", encoding="utf-8") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=2)
 
 
 def _run_generation_background(platforms: list[str], topics: list[str], include_tlp: bool = True) -> None:
     """
     Called in a background thread. Runs the main pipeline for insights and,
-    optionally, the TLP pipeline.
+    optionally, the TLP pipeline. Includes progress tracking for real-time feedback.
     """
     try:
-        _set_generation_status(True, "Running insight pipeline...")
+        # Stage 1: Run insight pipeline (0-50%)
+        _set_generation_status(
+            True, "Running insight pipeline...",
+            progress=5, stage="Starting pipeline"
+        )
 
         try:
             import main as mrsi_main  # type: ignore
 
+            _set_generation_status(
+                True, "Scraping articles from RSS feeds...",
+                progress=15, stage="Scraping"
+            )
             mrsi_main.main()
+
+            _set_generation_status(
+                True, "Generating AI summaries...",
+                progress=40, stage="Summarizing"
+            )
+
+            # Count generated insights
+            insight_count = len(list(Path("insights").glob("*.docx"))) if Path("insights").exists() else 0
+            _set_generation_status(
+                True, f"Daily Insights generated ({insight_count} files)",
+                progress=50, stage="Insights complete",
+                insights_generated=insight_count
+            )
         except Exception as e:
-            _set_generation_status(False, f"Insight pipeline error: {e}")
+            _set_generation_status(
+                False, f"Insight pipeline error: {e}",
+                progress=0, stage="Error"
+            )
             return
 
         if not include_tlp:
-            _set_generation_status(False, f"Daily Insights ready - {datetime.now().strftime('%b %d, %Y %I:%M %p')}")
+            _set_generation_status(
+                False,
+                f"Daily Insights ready - {datetime.now().strftime('%b %d, %Y %I:%M %p')}",
+                progress=100, stage="Complete",
+                insights_generated=len(list(Path("insights").glob("*.docx"))) if Path("insights").exists() else 0
+            )
             return
 
-        _set_generation_status(True, "Running TLP pipeline...")
+        # Stage 2: Run TLP pipeline (50-100%)
+        _set_generation_status(
+            True, "Running TLP pipeline...",
+            progress=55, stage="Starting TLP generation"
+        )
 
         try:
             import tl_summarizer as tlsum  # type: ignore
 
+            _set_generation_status(
+                True, "Generating thought leadership content...",
+                progress=60, stage="Generating TLPs"
+            )
             tlsum.main()
+
+            _set_generation_status(
+                True, "Applying platform filters...",
+                progress=80, stage="Filtering platforms"
+            )
+
+            # Count generated TLPs
+            tlp_count = 0
+            if platforms:
+                for key in topics:
+                    out_path = Path(f"tl_output_{key}.json")
+                    if out_path.exists():
+                        with open(out_path, encoding="utf-8") as f:
+                            data = json.load(f)
+                        filtered_pieces = [
+                            p
+                            for p in data.get("pieces", [])
+                            if any(pl.lower() in p.get("platform", "").lower() for pl in platforms)
+                        ]
+                        tlp_count += len(filtered_pieces)
+                        data["pieces"] = filtered_pieces
+                        with open(out_path, "w", encoding="utf-8") as f:
+                            json.dump(data, f, ensure_ascii=False, indent=2)
+            else:
+                # Count all TLP pieces
+                for key in topics:
+                    out_path = Path(f"tl_output_{key}.json")
+                    if out_path.exists():
+                        with open(out_path, encoding="utf-8") as f:
+                            data = json.load(f)
+                        tlp_count += len(data.get("pieces", []))
+
+            _set_generation_status(
+                True, f"Generated {tlp_count} TLP pieces",
+                progress=95, stage="Finalizing",
+                tlps_generated=tlp_count
+            )
+
+            _set_generation_status(
+                False,
+                f"TLPs ready - {datetime.now().strftime('%b %d, %Y %I:%M %p')} - {tlp_count} pieces",
+                progress=100, stage="Complete",
+                tlps_generated=tlp_count
+            )
         except Exception as e:
-            _set_generation_status(False, f"TLP pipeline error: {e}")
+            _set_generation_status(
+                False, f"TLP pipeline error: {e}",
+                progress=50, stage="Error"
+            )
             return
 
-        if platforms:
-            for key in topics:
-                out_path = Path(f"tl_output_{key}.json")
-                if out_path.exists():
-                    with open(out_path, encoding="utf-8") as f:
-                        data = json.load(f)
-                    data["pieces"] = [
-                        p
-                        for p in data.get("pieces", [])
-                        if any(pl.lower() in p.get("platform", "").lower() for pl in platforms)
-                    ]
-                    with open(out_path, "w", encoding="utf-8") as f:
-                        json.dump(data, f, ensure_ascii=False, indent=2)
-
-        _set_generation_status(False, f"TLPs ready - {datetime.now().strftime('%b %d, %Y %I:%M %p')}")
     except Exception as e:
-        _set_generation_status(False, f"Unexpected error: {e}")
+        _set_generation_status(
+            False, f"Unexpected error: {e}",
+            progress=0, stage="Error"
+        )
 
 
 def _base_metrics() -> dict:

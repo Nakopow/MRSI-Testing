@@ -1,0 +1,86 @@
+{
+  "editorial_note": "- Angles chosen: 01=Executive decision framework; 02=What most people get wrong; 03=Data breakdown/stat-led; 04=Storytelling/narrative arc; 05=Trend prediction/future scenarios\n- Mix rationale: These angles provide diverse perspectives on the botnet takedown, from actionable executive insights to challenging common assumptions and predicting future implications.",
+  "pieces": [
+    {
+      "number": "01",
+      "platform": "LinkedIn",
+      "angle": "Executive decision framework",
+      "format": "Text-only post. URL in first comment. 150-250 words.",
+      "objective": "To prompt senior leaders to re-evaluate their cybersecurity posture in light of the 17M device botnet takedown.",
+      "image_guidance": "No image.",
+      "posting_notes": "Post Tuesday/Wednesday 9-11 AM. Target CISOs, CIOs, and risk management leaders.\nHashtags: #Cybersecurity #Botnet #RiskManagement #ExoasiaMRSI",
+      "copy": "17 million devices. That's how many were compromised by a single botnet that Dutch authorities just dismantled. This isn't a theoretical risk - it's a wake-up call for every executive who thinks their organization is immune. The takedown disrupted criminal operations, but the 17 million infected devices remain. Your endpoints could be among them. The question isn't whether your security tools detected something. It's whether your incident response plan accounts for大规模 compromise scenarios. If your vendor risk management doesn't include botnet exposure assessment, your supply chain is a ticking bomb.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "02",
+      "platform": "YouTube / Video Script",
+      "angle": "What most people get wrong",
+      "format": "16:9. 75 seconds. Direct, urgent delivery.",
+      "objective": "To challenge the misconception that botnet takedowns make organizations safer.",
+      "image_guidance": "Speaker on screen with network visualization background.",
+      "posting_notes": "Video length: 60-75 seconds. Open with the hook about 17M devices.\nHashtags: #CybersecurityThreats #BotnetTakedown #ExoasiaMRSI",
+      "copy": "",
+      "script": "HOOK\nMost people think a massive botnet takedown is a victory. They're wrong.\n\nWHAT\nDutch authorities just dismantled a botnet infecting 17 million devices globally. This disrupted criminal operations temporarily.\n\nWHY IS IT IMPORTANT\nThe takedown removed one network, but the 17 million infected devices are still out there. Often undetected. Often yours.\n\nWHAT DOES THIS MEAN FOR LEADERS\nIf your incident response plan doesn't account for large-scale compromise, it's inadequate. If your vendor risk management ignores botnet exposure, your supply chain is vulnerable. This isn't relief. It's a warning.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "03",
+      "platform": "Instagram Carousel",
+      "angle": "Data breakdown/stat-led",
+      "format": "6-slide carousel. 1080x1080 pixels.",
+      "objective": "To visualize the implications of the 17 million device statistic.",
+      "image_guidance": "Dark background with bold white text and red accent numbers.",
+      "posting_notes": "Post Thursday 10 AM PST. Story poll about botnet awareness.\nHashtags: #Cybersecurity #Botnet #DigitalSecurity #ExoasiaMRSI",
+      "copy": "",
+      "script": "",
+      "slides": [
+        "17 MILLION DEVICES: What this botnet takedown REALLY means.",
+        "(REVEAL):\nThe Dutch-led takedown revealed 17 million infected devices globally. This number exposes a terrifying truth about endpoint security failures.",
+        "(MYTH / TRUTH):\nMYTH: Botnet takedowns make us safer.\nTRUTH: They expose the underlying infection that remains.",
+        "(CONTRARIAN VIEW):\nYour incident response isn't ready for 17 million potential infections.",
+        "(LESSON):\nVendor risk management isn't optional. Their infections are your risk.",
+        "This post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how."
+      ],
+      "caption": "17 million infected devices isn't just a number. It's a wake-up call for every executive. #Cybersecurity #Botnet #ExoasiaMRSI",
+      "_img_b64": null
+    },
+    {
+      "number": "04",
+      "platform": "Facebook",
+      "angle": "Storytelling/narrative arc",
+      "format": "Short narrative. Max 100 words.",
+      "objective": "To convey the impact through a relatable scenario.",
+      "image_guidance": "Network visualization or global map.",
+      "posting_notes": "Post Monday afternoon 1-3 PM.\nHashtags: #Cybersecurity #BotnetTakedown #ExoasiaMRSI",
+      "copy": "Imagine 17 million devices, quietly controlled by criminals. That was reality until Dutch authorities dismantled a major botnet. But here's the catch - the infected devices are still out there. Your organization could be among them. Are you sure your endpoints aren't part of the 17 million? #Cybersecurity #BotnetTakedown #ExoasiaMRSI\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "05",
+      "platform": "TikTok",
+      "angle": "Trend prediction/future scenarios",
+      "format": "9:16 vertical. 60 seconds. Energetic delivery.",
+      "objective": "To warn about future botnet evolution post-takedown.",
+      "image_guidance": "Direct to camera, minimal background.",
+      "posting_notes": "Post Tuesday-Thursday 1-3 PM. First 2 seconds: shocking claim.\nHashtags: #Cybersecurity #FutureThreats #Botnet #ExoasiaMRSI",
+      "copy": "",
+      "script": "The botnet takedown impacting 17 million devices isn't a victory. It's a warning shot.\n\nCriminals will shift tactics fast. They'll abandon large botnets for smaller, stealthier networks. Think swarms, not empires.\n\nTomorrow's threats will be harder to detect. They'll target supply chains with low-footprint malware. Your traditional defenses will be ineffective.\n\nDon't wait for the next takedown. Anticipate the next evolution.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "A massive botnet got dismantled. Don't get comfortable. #Cybersecurity #FutureThreats #ExoasiaMRSI",
+      "_img_b64": null
+    }
+  ],
+  "_raw": "Sample TLP content for botnet takedown briefing",
+  "_date": "June 01, 2026",
+  "_topic_key": "cybersecurity",
+  "_topic_display": "CyberSec"
+}

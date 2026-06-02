@@ -1,1 +1,6 @@
-{"running": true, "last_run": "2026-05-20T17:55:18.070680", "message": "Running insight pipeline..."}
+{
+  "running": false,
+  "last_run": null,
+  "message": "Pipeline idle. Ready to generate.",
+  "status": "idle"
+}

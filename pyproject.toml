@@ -11,7 +11,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = ["rss", "scraper", "news", "aggregator", "ai", "gemini"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -30,7 +30,7 @@ dependencies = [
     "beautifulsoup4>=4.11.0",
     "lxml>=4.9.0",
     "feedparser>=6.0.0",
-    "google-genai",
+    "google-generativeai>=0.8.0",
     "python-dotenv>=1.0.0",
     "flask>=3.0.0",
     "gunicorn>=21.2.0",

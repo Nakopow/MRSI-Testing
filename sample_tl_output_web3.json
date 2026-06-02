@@ -1,0 +1,86 @@
+{
+  "editorial_note": "- Angles chosen: 01=Hot take/contrarian opinion; 02=Trend prediction/future scenarios; 03=Myth-busting; 04=Storytelling/narrative arc; 05=What most people get wrong\n- Mix rationale: These angles provide diverse perspectives on crypto regulation and adoption, from challenging assumptions about decentralization to predicting market shifts.",
+  "pieces": [
+    {
+      "number": "01",
+      "platform": "LinkedIn",
+      "angle": "Hot take/contrarian opinion",
+      "format": "Text-only post. Link in first comment. 150-250 words.",
+      "objective": "To challenge the notion that crypto is beyond state control.",
+      "image_guidance": "No image.",
+      "posting_notes": "Post Tuesday/Wednesday 10-11 AM. Target fintech and blockchain leaders.\nHashtags: #CryptoPolitics #DigitalAssets #Blockchain #ExoasiaMRSI",
+      "copy": "The idea that crypto is decentralized and beyond state control is a dangerous fantasy. The US government just seized $1 billion in Iranian cryptocurrency. Trump's Bitcoin Reserve is a real discussion point. This isn't regulation - it's direct state participation in crypto ownership. Governments aren't trying to ban crypto. They're accumulating it. If your organization relies on crypto's perceived invulnerability, you're missing the bigger picture. State-level players are now active, aggressive participants. Your cold storage needs a geopolitical risk assessment.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "02",
+      "platform": "YouTube / Video Script",
+      "angle": "Trend prediction/future scenarios",
+      "format": "16:9. 90 seconds. Urgent, direct delivery.",
+      "objective": "To warn about the convergence of traditional finance and crypto.",
+      "image_guidance": "Split screen: Wall Street vs blockchain visuals.",
+      "posting_notes": "Video length: 80-90 seconds. Open with 'Wild West is over.'\nHashtags: #Tokenization #FintechFuture #CryptoRegulation #ExoasiaMRSI",
+      "copy": "",
+      "script": "HOOK\nThe Wild West of crypto is over. Institutional finance isn't just watching - it's integrating.\n\nWHAT\nThe House Financial Services Committee is engaging with tokenization. Moomoo is giving retail investors Wall Street-grade tools.\n\nWHY IS IT IMPORTANT\nThese forces - regulatory integration and retail professionalization - are accelerating crypto's maturation. This isn't evolution. It's convergence.\n\nWHAT DOES THIS MEAN FOR LEADERS\nIf you're a traditional financial institution, the window to integrate tokenized assets is closing. If you're a crypto fintech, your users now expect institutional tools. Inertia is competitive risk.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "03",
+      "platform": "Instagram Carousel",
+      "angle": "Myth-busting",
+      "format": "6-slide carousel. 1080x1080 pixels.",
+      "objective": "To debunk the myth that crypto adoption is purely organic.",
+      "image_guidance": "Dark professional background with clear white text.",
+      "posting_notes": "Post Thursday 2-4 PM. Story poll about policy awareness.\nHashtags: #CryptoPolicy #Stablecoins #GovernmentImpact #ExoasiaMRSI",
+      "copy": "",
+      "script": "",
+      "slides": [
+        "GOVERNMENT POLICY IS QUIETLY RESHAPING YOUR CRYPTO FUTURE.",
+        "(MYTH / TRUTH):\nMYTH: Crypto adoption is driven solely by market forces.\nTRUTH: Immigration policy directly impacts stablecoin economy and Bitcoin ATM usage.",
+        "(REVEAL):\nBitcoin ATM surges aren't about convenience. They're policy-driven adoption for communities needing faster remittances.",
+        "(LESSON):\nGovernments don't need crypto legislation to shape its future. Executive orders on immigration, trade, sanctions are powerful drivers.",
+        "(TIP):\nExpand your policy monitoring beyond crypto regulations. Watch immigration, trade, national security directives.",
+        "This post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how."
+      ],
+      "caption": "Crypto growth isn't purely organic. Policy is silently redirecting stablecoin flow and Bitcoin ATM usage. #CryptoPolicy #ExoasiaMRSI",
+      "_img_b64": null
+    },
+    {
+      "number": "04",
+      "platform": "Facebook",
+      "angle": "Storytelling/narrative arc",
+      "format": "Short conversational post. Max 100 words.",
+      "objective": "To illustrate retail crypto professionalization through Moomoo.",
+      "image_guidance": "Trading dashboard with blockchain elements.",
+      "posting_notes": "Post Wednesday evening 7-9 PM.\nHashtags: #CryptoRetail #FintechInnovation #ExoasiaMRSI",
+      "copy": "Advanced trading tools were once exclusive to Wall Street. Now Moomoo is delivering institutional-grade instruments to retail crypto investors. This isn't just an upgrade - it's a strategic leveling of the playing field. The era of casual crypto trading is fading. Are you truly empowering your users for this new competitive landscape? #CryptoRetail #FintechInnovation #ExoasiaMRSI\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "script": "",
+      "slides": [],
+      "caption": "",
+      "_img_b64": null
+    },
+    {
+      "number": "05",
+      "platform": "TikTok",
+      "angle": "What most people get wrong",
+      "format": "9:16 vertical. 60 seconds. Energetic talking-head.",
+      "objective": "To deliver a punchy revelation about state control over crypto.",
+      "image_guidance": "Direct to camera, minimal background.",
+      "posting_notes": "Post Friday 3-5 PM. First 2 seconds: $1B seizure fact.\nHashtags: #CryptoSecurity #GovernmentSeizure #Blockchain #ExoasiaMRSI",
+      "copy": "",
+      "script": "The US government just seized one BILLION dollars in Iranian cryptocurrency. And people are talking about Trump's Bitcoin Reserve.\n\nMost people think crypto is untouchable by governments. They're DEAD WRONG. This isn't just a seizure. It's a declaration that nation-states view crypto as a strategic asset.\n\nThey aren't trying to ban it. They're claiming it. Your cold storage needs a geopolitical risk assessment.\n\nThis post is produced by Exoasia's Market Research and Strategic Insight. Leaders stay ahead as they receive Daily Insights. Ask us how.",
+      "slides": [],
+      "caption": "Crypto is NOT beyond state control. The $1B Iranian crypto seizure proves it. #CryptoSecurity #ExoasiaMRSI",
+      "_img_b64": null
+    }
+  ],
+  "_raw": "Sample TLP content for Web3 briefing",
+  "_date": "June 01, 2026",
+  "_topic_key": "web3",
+  "_topic_display": "Web3"
+}

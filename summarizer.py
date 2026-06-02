@@ -42,26 +42,12 @@ _gemini_key_label: Optional[str] = None
 
 def _make_genai_client(api_key: str):
     """
-    google.generativeai is deprecated; use google-genai.
-    Support both import styles for compatibility across versions.
+    Create a Gemini client using google-generativeai package.
     """
-    import importlib.util
-
-    try:
-        from google import genai  # type: ignore
-    except Exception as e:
-        fallback_ok = importlib.util.find_spec("google.genai") is not None
-        if fallback_ok:  # pragma: no cover
-            import google.genai as genai  # type: ignore
-        else:
-            raise ImportError(
-                "Missing Gemini client library. Install `google-genai` into the active environment "
-                "and remove the conflicting `google` package if present:\n"
-                "  python -m pip install google-genai\n"
-                "  python -m pip uninstall -y google\n"
-            ) from e
-
-    return genai.Client(api_key=api_key)
+    import google.generativeai as genai
+    
+    genai.configure(api_key=api_key)
+    return genai
 
 
 def _response_text(resp) -> str:
@@ -323,7 +309,8 @@ def call_gemini_directly(prompt: str) -> str:
 
         while True:
             try:
-                response = _gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+                model = _gemini_client.GenerativeModel(GEMINI_MODEL)
+                response = model.generate_content(prompt)
                 return _response_text(response)
             except Exception as e:
                 last_exc = e

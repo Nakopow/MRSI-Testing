@@ -610,4 +610,70 @@ function downloadTLPPiece(topic, platform) {
 document.addEventListener('DOMContentLoaded', () => {
   fetchPipelineStatus();
   loadApiKeyConfig();
+  initializeDateAutoUpdate();
 });
+
+// ── Date Auto-Update at Midnight PH Time ─────────────────────────────────────
+
+/**
+ * Initialize automatic date update at midnight Philippines time (UTC+8)
+ * This ensures the date display updates automatically without requiring a page refresh
+ */
+function initializeDateAutoUpdate() {
+  // Get current time in Philippines (UTC+8)
+  const now = new Date();
+  const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  
+  // Calculate time until next midnight PH time
+  const nextMidnight = new Date(phTime);
+  nextMidnight.setHours(24, 0, 0, 0); // Set to next day's midnight
+  
+  const msUntilMidnight = nextMidnight - phTime;
+  
+  console.log(`Current PH time: ${phTime.toLocaleString()}`);
+  console.log(`Next midnight PH: ${nextMidnight.toLocaleString()}`);
+  console.log(`Milliseconds until midnight: ${msUntilMidnight}`);
+  
+  // Set timeout to reload page at midnight PH time
+  setTimeout(() => {
+    console.log('Midnight PH time reached - refreshing page for new date');
+    window.location.reload();
+  }, msUntilMidnight + 1000); // Add 1 second buffer
+  
+  // Update date displays every minute to keep them current
+  updateDateDisplays();
+  setInterval(updateDateDisplays, 60000);
+}
+
+/**
+ * Update all date displays on the page to show current date
+ */
+function updateDateDisplays() {
+  const now = new Date();
+  const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  
+  // Format options for different date displays
+  const fullDateOptions = { 
+    month: 'short', 
+    day: '2-digit', 
+    year: 'numeric',
+    timeZone: 'Asia/Manila' 
+  };
+  
+  const longDateOptions = {
+    month: 'long',
+    day: '2-digit',
+    year: 'numeric',
+    timeZone: 'Asia/Manila'
+  };
+  
+  // Update elements with date-display class
+  document.querySelectorAll('.date-display').forEach(el => {
+    el.textContent = phTime.toLocaleDateString('en-US', fullDateOptions);
+  });
+  
+  // Update elements with date-display-full class
+  document.querySelectorAll('.date-display-full').forEach(el => {
+    el.textContent = phTime.toLocaleDateString('en-US', longDateOptions);
+  });
+}

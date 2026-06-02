@@ -184,3 +184,6 @@ def handler(request):
         "headers": {"Access-Control-Allow-Origin": "*"},
         "body": json.dumps({"error": "Method not allowed"}),
     }
+
+# Export as app for Vercel
+app = handler

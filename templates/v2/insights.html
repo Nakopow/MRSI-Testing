@@ -44,6 +44,82 @@
 .spin { animation: spin 1s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Progress bar for generation */
+.gen-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  display: none;
+}
+.gen-progress.visible { display: block; }
+.gen-progress-bar {
+  height: 100%;
+  background: var(--purple);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.gen-progress-bar.animating {
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+@keyframes progress-indeterminate {
+  0% { width: 0%; margin-left: 0%; }
+  50% { width: 60%; margin-left: 20%; }
+  100% { width: 0%; margin-left: 100%; }
+}
+
+/* Generation log */
+.gen-log {
+  background: var(--off);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: var(--text2);
+  max-height: 150px;
+  overflow-y: auto;
+  display: none;
+}
+.gen-log.visible { display: block; }
+.gen-log-line {
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+.gen-log-line:last-child { border-bottom: none; }
+.gen-log-line.info { color: var(--text2); }
+.gen-log-line.success { color: var(--green); }
+.gen-log-line.error { color: var(--red); }
+.gen-log-line.warning { color: var(--amber); }
+
+/* Download button styling */
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.download-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* topic tabs */
 .insight-topic-tabs {
   display: flex;
@@ -268,17 +344,23 @@
   <div class="insights-toolbar">
     <i class="ti ti-file-analytics" style="font-size:18px;color:var(--purple)"></i>
     <div style="font-size:13px;color:var(--text2);">
-      Showing insights for <strong>{{ now_label }}</strong>
+      Showing insights for <strong id="currentDateDisplay">{{ now_label }}</strong>
     </div>
 
-    <div class="gen-status {% if status.running %}running{% elif status.last_run %}done{% endif %}" id="genStatus">
-      {% if status.running %}
-        <i class="ti ti-loader spin"></i> Generating…
-      {% elif status.last_run %}
-        <i class="ti ti-check"></i> {{ status.message }}
-      {% else %}
-        <i class="ti ti-clock"></i> Not yet generated today
-      {% endif %}
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="gen-status {% if status.running %}running{% elif status.last_run %}done{% endif %}" id="genStatus">
+        {% if status.running %}
+          <i class="ti ti-loader spin"></i> Generating…
+        {% elif status.last_run %}
+          <i class="ti ti-check"></i> {{ status.message }}
+        {% else %}
+          <i class="ti ti-clock"></i> Not yet generated today
+        {% endif %}
+      </div>
+
+      <button class="download-btn" onclick="downloadAllInsights()" type="button" title="Download all insights as ZIP" {% if not status.last_run %}disabled{% endif %}>
+        <i class="ti ti-download"></i> Download All
+      </button>
     </div>
 
     <button class="gen-btn" id="genBtn" onclick="triggerGenerate()" type="button"
@@ -287,6 +369,14 @@
       {% if status.running %}Generating…{% else %}Generate Today's Insights{% endif %}
     </button>
   </div>
+
+  <!-- Progress bar (shown during generation) -->
+  <div class="gen-progress" id="genProgress">
+    <div class="gen-progress-bar animating" id="genProgressBar"></div>
+  </div>
+
+  <!-- Generation log (shown during generation) -->
+  <div class="gen-log" id="genLog"></div>
 
   <!-- ── topic tabs ── -->
   <div class="insight-topic-tabs" id="insightTabs">
@@ -312,12 +402,17 @@
       <div class="insight-entry-header"
            onclick="toggleInsight('insight-{{ key }}-{{ loop.index }}')">
         <span class="insight-date-badge">{{ entry.date }}</span>
-        <div>
+        <div style="flex:1;">
           <div class="insight-entry-title">{{ entry.title }}</div>
           {% if entry.briefing_line %}
           <div class="insight-entry-sub">{{ entry.briefing_line[:120] }}{% if entry.briefing_line|length > 120 %}…{% endif %}</div>
           {% endif %}
         </div>
+        {% if entry.filename %}
+        <button class="btn-sm" type="button" onclick="event.stopPropagation(); downloadInsight('{{ entry.filename }}')" title="Download DOCX" style="margin-right: 8px;">
+          <i class="ti ti-download"></i>
+        </button>
+        {% endif %}
         <i class="ti ti-chevron-down insight-chevron"></i>
       </div>
 
@@ -397,6 +492,7 @@
 
 {% block scripts %}
 <script>
+// ── Topic switching ──────────────────────────────────────────────────────────
 function switchInsightTopic(key) {
   document.querySelectorAll('.insight-topic-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.insight-panel').forEach(p => p.classList.remove('active'));
@@ -408,6 +504,88 @@ function toggleInsight(id) {
   document.getElementById(id)?.classList.toggle('open');
 }
 
+// ── Progress tracking ────────────────────────────────────────────────────────
+const GENERATION_STAGES = [
+  { message: 'Starting pipeline...', progress: 5 },
+  { message: 'Scraping articles from RSS feeds...', progress: 15 },
+  { message: 'Analyzing article content...', progress: 25 },
+  { message: 'Generating AI summaries...', progress: 40 },
+  { message: 'Creating executive briefings...', progress: 55 },
+  { message: 'Formatting Daily Insights...', progress: 70 },
+  { message: 'Generating thought leadership questions...', progress: 80 },
+  { message: 'Saving DOCX files...', progress: 90 },
+  { message: 'Finalizing...', progress: 95 },
+  { message: 'Complete!', progress: 100 }
+];
+
+let currentStage = 0;
+let stageUpdateInterval = null;
+
+function showProgress() {
+  const progressBar = document.getElementById('genProgress');
+  const logContainer = document.getElementById('genLog');
+  progressBar.classList.add('visible');
+  logContainer.classList.add('visible');
+  logContainer.innerHTML = '';
+  currentStage = 0;
+
+  // Update stage every 2 seconds to show progress
+  stageUpdateInterval = setInterval(() => {
+    if (currentStage < GENERATION_STAGES.length - 1) {
+      currentStage++;
+      updateProgressDisplay();
+    }
+  }, 2000);
+}
+
+function updateProgressDisplay() {
+  const progressBar = document.getElementById('genProgressBar');
+  const logContainer = document.getElementById('genLog');
+  const stage = GENERATION_STAGES[currentStage];
+
+  // Update progress bar
+  progressBar.style.width = stage.progress + '%';
+
+  // Add log entry
+  const logEntry = document.createElement('div');
+  logEntry.className = 'gen-log-line ' + (stage.progress === 100 ? 'success' : 'info');
+  logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${stage.message}`;
+  logContainer.appendChild(logEntry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function hideProgress(completed) {
+  const progressBar = document.getElementById('genProgress');
+  const logContainer = document.getElementById('genLog');
+
+  if (stageUpdateInterval) {
+    clearInterval(stageUpdateInterval);
+    stageUpdateInterval = null;
+  }
+
+  if (completed) {
+    progressBar.querySelector('.gen-progress-bar').style.width = '100%';
+    const logEntry = document.createElement('div');
+    logEntry.className = 'gen-log-line success';
+    logEntry.innerHTML = `<strong>✓ Generation completed successfully!</strong>`;
+    logContainer.appendChild(logEntry);
+
+    // Enable download button
+    const downloadBtn = document.querySelector('.download-btn');
+    if (downloadBtn) downloadBtn.disabled = false;
+
+    // Hide after 3 seconds
+    setTimeout(() => {
+      progressBar.classList.remove('visible');
+      logContainer.classList.remove('visible');
+    }, 3000);
+  } else {
+    progressBar.classList.remove('visible');
+    logContainer.classList.remove('visible');
+  }
+}
+
+// ── Generate insights ────────────────────────────────────────────────────────
 function triggerGenerate() {
   const btn = document.getElementById('genBtn');
   const statusEl = document.getElementById('genStatus');
@@ -415,6 +593,9 @@ function triggerGenerate() {
   btn.innerHTML = '<i class="ti ti-loader spin"></i> Generating…';
   statusEl.className = 'gen-status running';
   statusEl.innerHTML = '<i class="ti ti-loader spin"></i> Running insight pipeline…';
+
+  // Show progress UI
+  showProgress();
 
   fetch('/v2/generate', {
     method: 'POST',
@@ -426,6 +607,7 @@ function triggerGenerate() {
   .then(r => r.json())
   .then(data => {
     if (!data.ok) {
+      hideProgress(false);
       statusEl.className = 'gen-status error';
       statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> ' + data.message;
       btn.disabled = false;
@@ -435,6 +617,7 @@ function triggerGenerate() {
     pollStatus();
   })
   .catch(() => {
+    hideProgress(false);
     statusEl.className = 'gen-status error';
     statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> Request failed';
     btn.disabled = false;
@@ -451,14 +634,93 @@ function pollStatus() {
       .then(s => {
         if (!s.running) {
           clearInterval(iv);
+          hideProgress(true);
           statusEl.className = 'gen-status done';
           statusEl.innerHTML = '<i class="ti ti-check"></i> ' + (s.message || 'Done');
           btn.disabled = false;
           btn.innerHTML = '<i class="ti ti-refresh"></i> Generate Today\'s Insights';
-          setTimeout(() => location.reload(), 1200);
+          // Reload page after a short delay to show new content
+          setTimeout(() => location.reload(), 2000);
         }
+      })
+      .catch(() => {
+        // Keep polling on network errors
       });
-  }, 3000);
+  }, 2000);
 }
+
+// ── Download functionality ───────────────────────────────────────────────────
+function downloadAllInsights() {
+  // Check if there are any insights to download
+  fetch('/pipeline/status')
+    .then(r => r.json())
+    .then(data => {
+      const insightCount = data.artifacts ? data.artifacts.insights_count : 0;
+      if (insightCount === 0) {
+        alert('No insights available to download. Please generate insights first.');
+        return;
+      }
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = '/pipeline/insights/download';
+      link.download = 'daily_insights_' + new Date().toISOString().split('T')[0] + '.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .catch(() => {
+      // Try direct download anyway
+      const link = document.createElement('a');
+      link.href = '/pipeline/insights/download';
+      link.download = 'daily_insights.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+}
+
+function downloadInsight(filename) {
+  const link = document.createElement('a');
+  link.href = '/pipeline/insights/download/' + encodeURIComponent(filename);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// ── Date auto-update ─────────────────────────────────────────────────────────
+function updateCurrentDate() {
+  const dateEl = document.getElementById('currentDateDisplay');
+  if (dateEl) {
+    const now = new Date();
+    const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+    dateEl.textContent = phTime.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: '2-digit', 
+      year: 'numeric' 
+    });
+  }
+}
+
+// Update date on load and schedule midnight refresh
+document.addEventListener('DOMContentLoaded', () => {
+  updateCurrentDate();
+  
+  // Calculate time until midnight PH time
+  const now = new Date();
+  const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  const nextMidnight = new Date(phTime);
+  nextMidnight.setHours(24, 0, 0, 0);
+  const msUntilMidnight = nextMidnight - phTime;
+  
+  console.log(`Next date auto-refresh at midnight PH time: ${nextMidnight.toLocaleString()}`);
+  
+  // Reload page at midnight to update date
+  setTimeout(() => {
+    console.log('Midnight PH time reached - refreshing for new date');
+    window.location.reload();
+  }, msUntilMidnight + 1000);
+});
 </script>
 {% endblock %}

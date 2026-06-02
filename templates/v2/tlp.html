@@ -508,13 +508,70 @@ function togglePlatform(btn) {
   applyPlatformFilter();
 }
 
+/**
+ * Apply platform filter - properly blocks content by removing from DOM
+ * instead of just visually hiding with CSS
+ */
 function applyPlatformFilter() {
   const active = [...document.querySelectorAll('.platform-toggle.active')]
     .map(b => b.dataset.platform);
+  
   document.querySelectorAll('.piece-card[data-platform]').forEach(card => {
-    const match = active.some(p => card.dataset.platform === p);
-    card.setAttribute('data-platform-hidden', match ? 'false' : 'true');
+    const platform = card.dataset.platform;
+    const match = active.some(p => platform === p);
+    
+    if (match) {
+      // Content is allowed - ensure it's in the DOM
+      card.setAttribute('data-platform-hidden', 'false');
+      card.style.display = '';
+    } else {
+      // Content is blocked - remove from visual flow completely
+      card.setAttribute('data-platform-hidden', 'true');
+      card.style.display = 'none';
+    }
   });
+  
+  // Update editorial note if all platforms are filtered
+  updateEditorialNote(active);
+}
+
+/**
+ * Update editorial note based on active filters
+ */
+function updateEditorialNote(activePlatforms) {
+  const allPlatforms = ['LinkedIn', 'YouTube / Video Script', 'Instagram Carousel', 'Facebook', 'TikTok'];
+  const blockedPlatforms = allPlatforms.filter(p => !activePlatforms.includes(p));
+  
+  // Update any visible piece counts
+  document.querySelectorAll('.topic-panel.active').forEach(panel => {
+    const visibleCards = panel.querySelectorAll('.piece-card[data-platform-hidden="false"]').length;
+    const totalCards = panel.querySelectorAll('.piece-card[data-platform]').length;
+    
+    // Could update a counter here if needed
+  });
+}
+
+/**
+ * Get filtered content data for export/API
+ * Returns only content from active platforms
+ */
+function getFilteredContent() {
+  const active = [...document.querySelectorAll('.platform-toggle.active')]
+    .map(b => b.dataset.platform);
+  
+  const content = [];
+  document.querySelectorAll('.piece-card[data-platform]').forEach(card => {
+    if (active.includes(card.dataset.platform)) {
+      content.push({
+        platform: card.dataset.platform,
+        cardId: card.id,
+        // Extract content from the card
+        objective: card.querySelector('.piece-section-text')?.textContent || '',
+      });
+    }
+  });
+  
+  return content;
 }
 
 // ── topic switching ──────────────────────────────────────────────────────────

@@ -340,12 +340,21 @@ def parse_digest_sections(output_txt: str) -> Dict[str, dict]:
 
 def load_tlp_payloads() -> Dict[str, dict]:
     payloads: Dict[str, dict] = {}
+    # Try real TLP output files first
     for path_str in glob.glob("tl_output_*.json"):
         path = Path(path_str)
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         topic_key = data.get("_topic_key") or path.stem.replace("tl_output_", "")
         payloads[topic_key] = data
+    # Fall back to sample TLP files if no real ones found (e.g., on Vercel)
+    if not payloads:
+        for path_str in glob.glob("sample_tl_output_*.json"):
+            path = Path(path_str)
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            topic_key = data.get("_topic_key") or path.stem.replace("sample_tl_output_", "")
+            payloads[topic_key] = data
     return payloads
 
 
