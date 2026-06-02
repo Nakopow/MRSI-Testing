@@ -689,38 +689,8 @@ function downloadInsight(filename) {
   document.body.removeChild(link);
 }
 
-// ── Date auto-update ─────────────────────────────────────────────────────────
-function updateCurrentDate() {
-  const dateEl = document.getElementById('currentDateDisplay');
-  if (dateEl) {
-    const now = new Date();
-    const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-    dateEl.textContent = phTime.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: '2-digit', 
-      year: 'numeric' 
-    });
-  }
-}
-
-// Update date on load and schedule midnight refresh
-document.addEventListener('DOMContentLoaded', () => {
-  updateCurrentDate();
-  
-  // Calculate time until midnight PH time
-  const now = new Date();
-  const phTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
-  const nextMidnight = new Date(phTime);
-  nextMidnight.setHours(24, 0, 0, 0);
-  const msUntilMidnight = nextMidnight - phTime;
-  
-  console.log(`Next date auto-refresh at midnight PH time: ${nextMidnight.toLocaleString()}`);
-  
-  // Reload page at midnight to update date
-  setTimeout(() => {
-    console.log('Midnight PH time reached - refreshing for new date');
-    window.location.reload();
-  }, msUntilMidnight + 1000);
-});
+// Note: Date display is now controlled by server-side now_label
+// which shows the date of the most recent insight file.
+// No client-side date override needed.
 </script>
 {% endblock %}

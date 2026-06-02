@@ -62,6 +62,38 @@ def _load_tl_outputs() -> dict[str, Any]:
     return result
 
 
+def _extract_date_from_filename(filename: str) -> str | None:
+    """
+    Extract date from insight filename patterns like:
+    - Exoasia_MRSI_DailyInsight_Jun01_AI.docx
+    - Exoasia_MRSI_DailyInsight_Jun02_CyberSec.docx
+    
+    Returns date string in "Month DD, YYYY" format or None if not found.
+    """
+    import re
+    
+    # Pattern to match month abbreviation followed by 1-2 digits
+    # e.g., "Jun01", "Jun02", "Mar9", "Dec25"
+    pattern = r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(\d{1,2})'
+    match = re.search(pattern, filename)
+    
+    if match:
+        month_abbr = match.group(1)
+        day = int(match.group(2))
+        
+        # Use current year since filenames don't include year
+        current_year = datetime.now().year
+        
+        # Create datetime object and format it properly
+        try:
+            date_obj = datetime.strptime(f"{month_abbr} {day} {current_year}", "%b %d %Y")
+            return date_obj.strftime("%B %d, %Y")
+        except ValueError:
+            return None
+    
+    return None
+
+
 def _load_insight_texts() -> dict[str, list[dict]]:
     """
     Load plain-text insight content from output.txt (parse_digest_sections)
@@ -109,9 +141,14 @@ def _load_insight_texts() -> dict[str, list[dict]]:
                 else:
                     matched_key = "ai"
 
-            mtime = datetime.fromtimestamp(p.stat().st_mtime)
+            # Extract date from filename instead of using file modification time
+            date_str = _extract_date_from_filename(p.name)
+            if date_str is None:
+                # Fallback to modification time if date extraction fails
+                mtime = datetime.fromtimestamp(p.stat().st_mtime)
+                date_str = mtime.strftime("%B %d, %Y")
+            
             existing_dates = {e.get("date") for e in insight_map[matched_key]}
-            date_str = mtime.strftime("%B %d, %Y")
             if date_str not in existing_dates:
                 insight_map[matched_key].append(
                     {
@@ -353,6 +390,26 @@ def tlp_page():
 def insights_page():
     insight_map = _load_insight_texts()
     status = _generation_status()
+    
+    # Find the latest insight date across all topics to display in the header
+    latest_date = None
+    for entries in insight_map.values():
+        for entry in entries:
+            date_str = entry.get("date", "")
+            if date_str:
+                try:
+                    date_obj = datetime.strptime(date_str, "%B %d, %Y")
+                    if latest_date is None or date_obj > latest_date:
+                        latest_date = date_obj
+                except ValueError:
+                    pass
+    
+    # Format the latest date for display, or use today if no insights found
+    if latest_date:
+        now_label = latest_date.strftime("%b %d, %Y")
+    else:
+        now_label = datetime.now().strftime("%b %d, %Y")
+    
     return render_template(
         "v2/insights.html",
         insight_map=insight_map,
@@ -361,7 +418,7 @@ def insights_page():
         status=status,
         active_page="insights",
         active_page_title="Daily Insights",
-        now_label=datetime.now().strftime("%b %d, %Y"),
+        now_label=now_label,
         metrics=_base_metrics(),
     )
 
