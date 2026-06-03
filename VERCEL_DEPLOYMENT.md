@@ -1,6 +1,14 @@
 # Vercel Deployment Guide for MRSI Platform
 
-This guide explains how to deploy the MRSI Platform to Vercel with the necessary architectural changes.
+## 🚀 Quick Setup Checklist
+
+Before deploying, make sure you have:
+
+- [ ] **GEMINI_API_KEY** - Get from [Google AI Studio](https://aistudio.google.com/apikey)
+- [ ] **feeds.json** - Already included with default RSS feeds (customize as needed)
+- [ ] **Supabase Account** (recommended) - For persistent storage
+  - Create bucket named `mrsi-artifacts`
+  - Get `SUPABASE_URL` and `SUPABASE_KEY` from project settings
 
 ## ⚠️ Important Limitations
 
