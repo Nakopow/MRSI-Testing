@@ -173,12 +173,18 @@ class SupabaseStorageBackend(StorageBackend):
     def __init__(self, bucket_name: str = "mrsi-artifacts"):
         self.bucket_name = bucket_name
         
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
+        
+        if not supabase_url or not supabase_key:
+            raise ValueError(
+                "SUPABASE_URL and SUPABASE_KEY environment variables are required. "
+                "Set STORAGE_BACKEND=local for local development without Supabase."
+            )
+        
         try:
             from supabase import create_client
-            self.supabase = create_client(
-                os.getenv("SUPABASE_URL"),
-                os.getenv("SUPABASE_KEY"),
-            )
+            self.supabase = create_client(supabase_url, supabase_key)
         except ImportError:
             raise ImportError("supabase is required. Install with: pip install supabase")
     
