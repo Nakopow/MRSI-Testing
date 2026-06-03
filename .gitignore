@@ -77,6 +77,12 @@ cybersecurity_summary.txt
 web3_summary.txt
 output.txt
 
+# Generated DOCX files (pipeline artifacts)
+*.docx
+
+# Generated JSON outputs (pipeline artifacts)
+tl_output_*.json
+
 # Logs
 *.log
 scraper.log
