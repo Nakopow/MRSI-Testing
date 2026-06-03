@@ -234,9 +234,12 @@ def _set_generation_status(
 
 def _run_generation_background(platforms: list[str], topics: list[str], include_tlp: bool = True) -> None:
     """
-    Called in a background thread. Runs the main pipeline for insights and,
-    optionally, the TLP pipeline. Includes progress tracking for real-time feedback.
+    Called in a background thread. Runs the pipeline for insights and,
+    optionally, the TLP pipeline. Uses the pipeline components directly
+    instead of calling main.main() for better web compatibility.
     """
+    import json as json_module
+    
     try:
         # Stage 1: Run insight pipeline (0-50%)
         _set_generation_status(
@@ -245,18 +248,60 @@ def _run_generation_background(platforms: list[str], topics: list[str], include_
         )
 
         try:
-            import main as mrsi_main  # type: ignore
-
+            # Import pipeline components
+            from scraper_main import main as run_scraping
+            from summarizer import generate_daily_digest
+            from main import run_formatter
+            
+            _set_generation_status(
+                True, "Loading feeds from feeds.json...",
+                progress=10, stage="Loading feeds"
+            )
+            
+            # Load feeds
+            with open("feeds.json", "r", encoding="utf-8") as f:
+                feeds = json_module.load(f)
+            
             _set_generation_status(
                 True, "Scraping articles from RSS feeds...",
                 progress=15, stage="Scraping"
             )
-            mrsi_main.main()
-
+            
+            # Run scraping
+            from scraper import enrich_articles, fetch_rss_items, load_url_cache
+            URL_CACHE_FILE = ".url_cache.json"
+            
+            url_cache = load_url_cache(URL_CACHE_FILE)
+            raw_items = fetch_rss_items(feeds)
+            enriched = enrich_articles(raw_items, url_cache, cache_file=URL_CACHE_FILE)
+            
+            # Group by topic
+            articles_by_topic = {}
+            for article in enriched:
+                topic = article.get("topic", "unknown")
+                if topic not in articles_by_topic:
+                    articles_by_topic[topic] = []
+                articles_by_topic[topic].append(article)
+            
             _set_generation_status(
                 True, "Generating AI summaries...",
-                progress=40, stage="Summarizing"
+                progress=30, stage="Summarizing"
             )
+            
+            # Generate digest
+            digest = generate_daily_digest(articles_by_topic)
+            
+            # Save output.txt
+            with open("output.txt", "w", encoding="utf-8") as f:
+                f.write(digest)
+            
+            _set_generation_status(
+                True, "Formatting Daily Insights...",
+                progress=45, stage="Formatting"
+            )
+            
+            # Run formatter
+            run_formatter("output.txt")
 
             # Count generated insights
             insight_count = len(list(Path("insights").glob("*.docx"))) if Path("insights").exists() else 0
@@ -267,7 +312,7 @@ def _run_generation_background(platforms: list[str], topics: list[str], include_
             )
         except Exception as e:
             _set_generation_status(
-                False, f"Insight pipeline error: {e}",
+                False, f"Insight pipeline error: {str(e)}",
                 progress=0, stage="Error"
             )
             return
@@ -288,27 +333,42 @@ def _run_generation_background(platforms: list[str], topics: list[str], include_
         )
 
         try:
-            import tl_summarizer as tlsum  # type: ignore
+            import tl_summarizer as tlsum
+            import tl_formatter
 
             _set_generation_status(
                 True, "Generating thought leadership content...",
                 progress=60, stage="Generating TLPs"
             )
-            tlsum.main()
+            
+            # Run TL summarizer
+            gemini_key = None
+            import os
+            gemini_key = os.environ.get("GEMINI_API_KEY")
+            if not gemini_key:
+                raise EnvironmentError("GEMINI_API_KEY environment variable is not set")
+            
+            prompts_path = "tl_prompts_config.json"
+            json_files = tlsum.summarize_tl(
+                gemini_key=gemini_key,
+                output_txt="output.txt",
+                prompts_path=prompts_path,
+                outdir=".",
+            )
 
             _set_generation_status(
                 True, "Applying platform filters...",
                 progress=80, stage="Filtering platforms"
             )
 
-            # Count generated TLPs
+            # Count and filter generated TLPs
             tlp_count = 0
             if platforms:
                 for key in topics:
                     out_path = Path(f"tl_output_{key}.json")
                     if out_path.exists():
                         with open(out_path, encoding="utf-8") as f:
-                            data = json.load(f)
+                            data = json_module.load(f)
                         filtered_pieces = [
                             p
                             for p in data.get("pieces", [])
@@ -317,7 +377,7 @@ def _run_generation_background(platforms: list[str], topics: list[str], include_
                         tlp_count += len(filtered_pieces)
                         data["pieces"] = filtered_pieces
                         with open(out_path, "w", encoding="utf-8") as f:
-                            json.dump(data, f, ensure_ascii=False, indent=2)
+                            json_module.dump(data, f, ensure_ascii=False, indent=2)
             else:
                 # Count all TLP pieces
                 for key in topics:
