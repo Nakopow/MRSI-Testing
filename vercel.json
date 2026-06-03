@@ -9,20 +9,6 @@
       }
     },
     {
-      "src": "api/keys.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.11"
-      }
-    },
-    {
-      "src": "api/pipeline.py",
-      "use": "@vercel/python",
-      "config": {
-        "runtime": "python3.11"
-      }
-    },
-    {
       "src": "static/**",
       "use": "@vercel/static"
     }
@@ -31,14 +17,6 @@
     {
       "src": "/static/(.*)",
       "dest": "static/$1"
-    },
-    {
-      "src": "/api/keys",
-      "dest": "api/keys.py"
-    },
-    {
-      "src": "/api/pipeline",
-      "dest": "api/pipeline.py"
     },
     {
       "src": "/api/(.*)",
