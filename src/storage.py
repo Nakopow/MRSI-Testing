@@ -272,7 +272,13 @@ class ArtifactStorage:
     """High-level storage API for MRSI pipeline artifacts."""
     
     def __init__(self):
-        self.backend = get_storage_backend()
+        try:
+            self.backend = get_storage_backend()
+        except (ValueError, ImportError) as e:
+            # Fall back to local storage if cloud storage fails to initialize
+            logger.warning(f"Failed to initialize cloud storage: {e}")
+            logger.warning("Falling back to local storage")
+            self.backend = LocalStorageBackend()
     
     def save_article(self, topic: str, content: str) -> bool:
         """Save scraped articles for a topic."""
