@@ -10,6 +10,7 @@ from flask import Blueprint, jsonify, request
 from scraper_main import main as run_scraping
 from summarizer import generate_daily_digest
 from main import run_formatter, run_tl_pipeline, parse_digest_sections, load_tlp_payloads
+from src.storage import storage
 
 pipeline_bp = Blueprint("pipeline", __name__)
 logger = logging.getLogger(__name__)
@@ -49,13 +50,26 @@ def _update_step_status(step, status, duration=None):
 # ── Helper Functions ───────────────────────────────────────────────────────────
 
 def _check_articles_exist():
-    """Check if article files exist from scraping."""
+    """Check if article files exist from scraping (local or cloud storage)."""
     topics = ["ai", "cybersecurity", "web3"]
-    return all(os.path.exists(f"{topic}_articles.txt") for topic in topics)
+    # Check local files first
+    for topic in topics:
+        if os.path.exists(f"{topic}_articles.txt"):
+            return True
+    # Check cloud storage
+    try:
+        return all(storage.backend.exists(f"articles/{topic}_articles.txt") for topic in topics)
+    except Exception:
+        return False
 
 def _check_digest_exists():
-    """Check if output.txt exists from summarization."""
-    return os.path.exists("output.txt")
+    """Check if output.txt exists from summarization (local or cloud storage)."""
+    if os.path.exists("output.txt"):
+        return True
+    try:
+        return storage.backend.exists("output.txt")
+    except Exception:
+        return False
 
 # ── Pipeline Step Routes ──────────────────────────────────────────────────────
 
@@ -144,18 +158,64 @@ def generate_summary():
                 topics = ["ai", "cybersecurity", "web3"]
                 for topic in topics:
                     filename = f"{topic}_articles.txt"
+                    content = None
+                    # Try local file first
                     if os.path.exists(filename):
                         with open(filename, "r", encoding="utf-8") as f:
                             content = f.read()
-                        # Parse articles from file (simplified - just check if exists)
-                        articles_by_topic[topic] = [{"title": "Articles loaded", "body": content}]
+                    # Fall back to cloud storage
+                    elif storage.backend.exists(f"articles/{topic}_articles.txt"):
+                        content = storage.backend.load(f"articles/{topic}_articles.txt")
+                    
+                    if content:
+                        # Parse articles from file - extract title, published, body from formatted text
+                        articles = []
+                        lines = content.split("\n")
+                        i = 0
+                        while i < len(lines):
+                            line = lines[i].strip()
+                            # Look for article title (starts with quote)
+                            if line.startswith('"') and line.endswith('"'):
+                                title = line.strip('"')
+                                # Next line should be the date
+                                published = ""
+                                if i + 1 < len(lines):
+                                    published = lines[i + 1].strip()
+                                    i += 1
+                                # Skip empty lines and collect body until we hit a URL or separator
+                                body_lines = []
+                                i += 1
+                                while i < len(lines):
+                                    body_line = lines[i].strip()
+                                    # Stop at URL (starts with http) or separator (===)
+                                    if body_line.startswith("http") or body_line.startswith("=" * 10):
+                                        break
+                                    if body_line:
+                                        body_lines.append(body_line)
+                                    i += 1
+                                if title and body_lines:
+                                    articles.append({
+                                        "title": title,
+                                        "published": published,
+                                        "body": " ".join(body_lines)
+                                    })
+                            i += 1
+                        # If no articles parsed, use the whole content as fallback
+                        if not articles:
+                            articles = [{"title": f"{topic} articles", "published": "Unknown", "body": content}]
+                        articles_by_topic[topic] = articles
                 
                 # Generate digest
                 digest = generate_daily_digest(articles_by_topic)
                 
-                # Save to output.txt
+                # Save to local file AND cloud storage
                 with open("output.txt", "w", encoding="utf-8") as f:
                     f.write(digest)
+                # Also save to cloud storage for Vercel
+                try:
+                    storage.save_digest(digest)
+                except Exception as e:
+                    logger.warning(f"Failed to save digest to cloud storage: {e}")
                 
                 duration = time.time() - start
                 _update_step_status("summarizing", "idle", duration)
@@ -378,7 +438,42 @@ def run_full_pipeline():
                     if os.path.exists(filename):
                         with open(filename, "r", encoding="utf-8") as f:
                             content = f.read()
-                        articles_by_topic[topic] = [{"title": "Articles loaded", "body": content}]
+                        # Parse articles from file - extract title, published, body from formatted text
+                        articles = []
+                        lines = content.split("\n")
+                        i = 0
+                        while i < len(lines):
+                            line = lines[i].strip()
+                            # Look for article title (starts with quote)
+                            if line.startswith('"') and line.endswith('"'):
+                                title = line.strip('"')
+                                # Next line should be the date
+                                published = ""
+                                if i + 1 < len(lines):
+                                    published = lines[i + 1].strip()
+                                    i += 1
+                                # Skip empty lines and collect body until we hit a URL or separator
+                                body_lines = []
+                                i += 1
+                                while i < len(lines):
+                                    body_line = lines[i].strip()
+                                    # Stop at URL (starts with http) or separator (===)
+                                    if body_line.startswith("http") or body_line.startswith("=" * 10):
+                                        break
+                                    if body_line:
+                                        body_lines.append(body_line)
+                                    i += 1
+                                if title and body_lines:
+                                    articles.append({
+                                        "title": title,
+                                        "published": published,
+                                        "body": " ".join(body_lines)
+                                    })
+                            i += 1
+                        # If no articles parsed, use the whole content as fallback
+                        if not articles:
+                            articles = [{"title": f"{topic} articles", "published": "Unknown", "body": content}]
+                        articles_by_topic[topic] = articles
                 
                 digest = generate_daily_digest(articles_by_topic)
                 with open("output.txt", "w", encoding="utf-8") as f:

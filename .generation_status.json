@@ -1,6 +1,9 @@
 {
   "running": false,
-  "last_run": null,
-  "message": "Pipeline idle. Ready to generate.",
-  "status": "idle"
+  "last_run": "2026-06-04T03:19:20.463214",
+  "message": "TLPs ready - Jun 04, 2026 03:19 AM - 15 pieces",
+  "progress": 100,
+  "stage": "Complete",
+  "insights_generated": 6,
+  "tlps_generated": 15
 }

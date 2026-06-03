@@ -5,6 +5,7 @@ from pathlib import Path
 from flask import Blueprint, render_template
 
 from main import TOPIC_LABELS, extract_posting_windows, load_tlp_payloads, parse_digest_sections
+from src.storage import storage
 
 # Sample content fallback for when output.txt doesn't exist (e.g., on Vercel)
 SAMPLE_OUTPUT_FILE = "sample_output.txt"
@@ -47,16 +48,55 @@ def _platform_icon_class(platform_name: str) -> tuple[str, str]:
 
 
 def _build_dashboard_context(active_page: str = "dashboard") -> dict:
-    # Try to load output.txt, fall back to sample_output.txt if not found
-    output_file = "output.txt"
-    if not os.path.exists(output_file):
-        if os.path.exists(SAMPLE_OUTPUT_FILE):
-            output_file = SAMPLE_OUTPUT_FILE
+    # Try to load from cloud storage first, fall back to local filesystem, then sample
+    sections = {}
+    insight_files = []
+    tlp_files = []
     
-    sections = parse_digest_sections(output_file)
-    tlp = load_tlp_payloads()
-    insight_files = sorted(Path("insights").glob("*.docx"))
-    tlp_files = sorted(Path("TLPs").glob("*.docx"))
+    # Try cloud storage first (for Vercel deployment)
+    try:
+        digest_content = storage.load_digest()
+        if digest_content:
+            # Parse digest content directly
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                f.write(digest_content)
+                temp_path = f.name
+            sections = parse_digest_sections(temp_path)
+            os.unlink(temp_path)
+        else:
+            # Fall back to local or sample
+            output_file = "output.txt"
+            if not os.path.exists(output_file):
+                if os.path.exists(SAMPLE_OUTPUT_FILE):
+                    output_file = SAMPLE_OUTPUT_FILE
+            sections = parse_digest_sections(output_file)
+    except Exception as e:
+        # Fall back to local or sample on error
+        output_file = "output.txt"
+        if not os.path.exists(output_file):
+            if os.path.exists(SAMPLE_OUTPUT_FILE):
+                output_file = SAMPLE_OUTPUT_FILE
+        sections = parse_digest_sections(output_file)
+    
+    # Try to get TLP payloads from storage
+    try:
+        tlp = {}
+        # Try loading from cloud storage
+        for topic in ["ai", "cybersecurity", "web3"]:
+            tlp_data = storage.load_tlp_json(topic)
+            if tlp_data:
+                tlp[topic] = tlp_data
+        # Fall back to local files if no cloud data
+        if not tlp:
+            tlp = load_tlp_payloads()
+    except Exception:
+        tlp = load_tlp_payloads()
+    
+    # Get file lists from local filesystem (for display purposes)
+    # In a full cloud implementation, these would come from storage.list_files()
+    insight_files = sorted(Path("insights").glob("*.docx")) if Path("insights").exists() else []
+    tlp_files = sorted(Path("TLPs").glob("*.docx")) if Path("TLPs").exists() else []
 
     topic_cards = []
     for key, section in sections.items():
