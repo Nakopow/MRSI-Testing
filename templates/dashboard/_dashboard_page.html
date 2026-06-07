@@ -7,9 +7,50 @@
     {% for card in topic_cards %}
     <button class="topic-chip" type="button" data-topic-filter>{{ card.label }}</button>
     {% endfor %}
-    <button class="topic-chip-add" type="button">
+    <button class="topic-chip-add" type="button" onclick="showAddTopicModal()">
       <i class="ti ti-plus"></i> Add Topic
     </button>
+  </div>
+
+  <!-- Add Topic Modal -->
+  <div class="modal-overlay" id="addTopicModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Topic</h3>
+        <button class="modal-close" onclick="closeAddTopicModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Add a custom topic to track in your dashboard. You'll need to provide RSS feeds for this topic.</p>
+        
+        <div class="form-row">
+          <label class="form-label">Topic Name</label>
+          <input class="form-input" id="newTopicName" placeholder="e.g., Fintech, Health Tech, EdTech">
+        </div>
+        
+        <div class="form-row">
+          <label class="form-label">Topic Key (slug)</label>
+          <input class="form-input" id="newTopicKey" placeholder="e.g., fintech, healthtech, edtech" readonly style="background: var(--off);">
+        </div>
+        
+        <div class="form-row form-span-full">
+          <label class="form-label">RSS Feed URLs</label>
+          <textarea class="form-input form-textarea" id="newTopicFeeds" rows="4" placeholder="Enter RSS feed URLs, one per line&#10;https://example.com/feed&#10;https://another-example.com/rss"></textarea>
+        </div>
+        
+        <div class="form-row">
+          <label class="form-label">Primary Color</label>
+          <input class="form-input" id="newTopicColor" type="color" value="#6B3FA0" style="height: 40px; padding: 4px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeAddTopicModal()">Cancel</button>
+        <button class="btn btn-lime" onclick="addNewTopic()">
+          <i class="ti ti-plus"></i> Add Topic
+        </button>
+      </div>
+    </div>
   </div>
 
   <div class="status-bar">

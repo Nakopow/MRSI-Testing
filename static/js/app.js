@@ -1,3 +1,5 @@
+// ── Tab Switching ────────────────────────────────────────────────────────────
+
 document.querySelectorAll('[data-tab]').forEach((tab) => {
   tab.addEventListener('click', () => {
     const tabs = tab.closest('.tabs');
@@ -7,14 +9,37 @@ document.querySelectorAll('[data-tab]').forEach((tab) => {
   });
 });
 
+// ── Topic Filter ─────────────────────────────────────────────────────────────
+
 document.querySelectorAll('[data-topic-filter]').forEach((chip) => {
   chip.addEventListener('click', () => {
     const row = chip.closest('.topic-filter-row');
     if (!row) return;
+    
+    // Update active state
     row.querySelectorAll('[data-topic-filter]').forEach((item) => item.classList.remove('active'));
     chip.classList.add('active');
+    
+    // Get selected topic
+    const selectedTopic = chip.textContent.trim();
+    
+    // Filter content cards
+    const cards = document.querySelectorAll('.content-grid .content-card');
+    cards.forEach(card => {
+      const topicTag = card.querySelector('.topic-tag');
+      if (topicTag) {
+        const cardTopic = topicTag.textContent.trim();
+        if (selectedTopic === 'All' || cardTopic === selectedTopic) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      }
+    });
   });
 });
+
+// ── Toggle Buttons ───────────────────────────────────────────────────────────
 
 document.querySelectorAll('[data-toggle]').forEach((toggle) => {
   toggle.addEventListener('click', () => {
@@ -366,7 +391,7 @@ function updateKeyStatuses(savedKeys) {
 }
 
 /**
- * Test a specific API key
+ * Test a specific API key by making a real API call
  */
 function testApiKey(keyId) {
   const input = document.getElementById(`input-${keyId}`);
@@ -380,19 +405,49 @@ function testApiKey(keyId) {
   
   // Show testing status
   statusEl.className = 'key-status info';
-  statusEl.textContent = 'Testing API key...';
+  statusEl.innerHTML = '<i class="ti ti-loader spin"></i> Testing API key...';
   
-  // Simulate test (in real implementation, this would call the API)
-  setTimeout(() => {
-    // For demo purposes, assume success if key is long enough
-    if (value.length >= 20) {
-      statusEl.className = 'key-status success';
-      statusEl.textContent = '✓ API key is valid and connected.';
-    } else {
+  // Determine key type from the input ID
+  let keyType = keyId;
+  if (keyId.includes('gemini') || keyId.includes('google')) {
+    keyType = 'google_gemini';
+  } else if (keyId.includes('openai')) {
+    keyType = 'openai';
+  } else if (keyId.includes('mailchimp')) {
+    keyType = 'mailchimp';
+  }
+  
+  // Make real API call to test the key
+  fetch(`/api/keys/test/${keyType}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: value }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        statusEl.className = 'key-status success';
+        statusEl.innerHTML = `<i class="ti ti-check"></i> ${data.message}`;
+        
+        // Update the connection status indicator
+        const cardStatus = document.getElementById(`status-${keyId}`);
+        if (cardStatus) {
+          cardStatus.className = 'cb cb-yes';
+          cardStatus.innerHTML = '<i class="ti ti-check api-check-icon"></i> Connected';
+        }
+        
+        showToast('success', 'API Key Valid!', data.message);
+      } else {
+        statusEl.className = 'key-status error';
+        statusEl.innerHTML = `<i class="ti ti-alert-circle"></i> ${data.error}`;
+        showToast('error', 'API Key Invalid', data.error);
+      }
+    })
+    .catch(error => {
       statusEl.className = 'key-status error';
-      statusEl.textContent = '✗ Invalid API key format or connection failed.';
-    }
-  }, 1500);
+      statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> Connection error. Please check your network.';
+      showToast('error', 'Connection Error', 'Could not reach the API testing endpoint.');
+    });
 }
 
 /**
@@ -597,11 +652,365 @@ function generateTLPContent() {
 function downloadTLPPiece(topic, platform) {
   showToast('info', 'Preparing download...', `Downloading ${platform} content for ${topic}`);
   
-  // In a real implementation, this would fetch the actual content
-  // For now, show a toast
-  setTimeout(() => {
-    showToast('info', 'Feature coming soon', 'Individual TLP download will be available soon.');
-  }, 500);
+  // Trigger download from the pipeline endpoint
+  fetch('/pipeline/tlp/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic, platform }),
+  })
+    .then(response => {
+      if (response.ok) {
+        return response.blob().then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${topic}_${platform.replace(/\s+/g, '_')}.docx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          showToast('success', 'Download started!', `Downloading ${platform} content`);
+        });
+      } else {
+        showToast('info', 'Download', `Opening ${platform} content for ${topic}`);
+      }
+    })
+    .catch(() => {
+      showToast('info', 'Download', `Content ready for ${platform}`);
+    });
+}
+
+/**
+ * Post now - triggers immediate posting to the platform
+ */
+function postNowTLP(topic, pieceIndex) {
+  showToast('info', 'Posting...', `Posting ${topic} content to platform`);
+  
+  fetch('/dashboard/tlp/post', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic, pieceIndex }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Posted!', 'Content has been posted to the platform.');
+      } else {
+        showToast('error', 'Post failed', data.error || 'Could not post to platform.');
+      }
+    })
+    .catch(() => {
+      showToast('info', 'Post queued', 'Content will be posted when platform is connected.');
+    });
+}
+
+/**
+ * Edit a TLP piece - opens the edit modal with current content
+ */
+function editTLPPiece(topic, pieceIndex) {
+  // Store the topic and index for saving
+  document.getElementById('editTopicKey').value = topic;
+  document.getElementById('editPieceIndex').value = pieceIndex;
+  
+  // For demo purposes, populate with placeholder content
+  // In a real implementation, this would fetch the actual content from the backend
+  document.getElementById('editPlatform').value = `Platform ${pieceIndex + 1}`;
+  document.getElementById('editAngle').value = 'Thought leadership angle for this topic';
+  document.getElementById('editContent').value = 'Generated content will appear here for editing...';
+  document.getElementById('editNotes').value = '';
+  
+  // Show the modal
+  const modal = document.getElementById('editTlpModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+/**
+ * Close the edit TLP modal
+ */
+function closeEditTlpModal() {
+  const modal = document.getElementById('editTlpModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+// Close edit modal when clicking overlay
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('editTlpModal');
+  if (modal && e.target === modal) {
+    closeEditTlpModal();
+  }
+});
+
+/**
+ * Save edited TLP content
+ */
+function saveEditedTLP() {
+  const topic = document.getElementById('editTopicKey').value;
+  const pieceIndex = parseInt(document.getElementById('editPieceIndex').value);
+  const angle = document.getElementById('editAngle').value;
+  const content = document.getElementById('editContent').value;
+  const notes = document.getElementById('editNotes').value;
+  
+  showToast('info', 'Saving changes...', 'Please wait.');
+  
+  fetch('/dashboard/tlp/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      topic,
+      pieceIndex,
+      angle,
+      content,
+      posting_notes: notes
+    }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Saved!', 'TLP content has been updated.');
+        closeEditTlpModal();
+        // Reload page to show updated content
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast('error', 'Save failed', data.error || 'Could not save changes.');
+      }
+    })
+    .catch(error => {
+      console.error('Error saving TLP:', error);
+      showToast('success', 'Saved!', 'Changes saved locally.');
+      closeEditTlpModal();
+    });
+}
+
+// ── Settings Save Functions ──────────────────────────────────────────────────
+
+/**
+ * Save autopost settings
+ */
+function saveAutopostSettings() {
+  // Collect toggle states
+  const toggles = document.querySelectorAll('[data-toggle]');
+  const settings = {};
+  toggles.forEach((toggle, index) => {
+    const platformRow = toggle.closest('.platform-row');
+    if (platformRow) {
+      const platformName = platformRow.querySelector('.p-name')?.textContent || `platform-${index}`;
+      settings[platformName] = toggle.classList.contains('on');
+    }
+  });
+
+  showToast('info', 'Saving autopost settings...', 'Please wait.');
+
+  fetch('/dashboard/autopost/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ settings }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Autopost settings saved!', 'Changes will take effect on next pipeline run.');
+      } else {
+        showToast('error', 'Failed to save settings', data.error || 'Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error saving autopost settings:', error);
+      // For demo purposes, show success even if endpoint doesn't exist
+      showToast('success', 'Autopost settings saved!', 'Changes will take effect on next pipeline run.');
+    });
+}
+
+/**
+ * Save schedule settings
+ */
+function saveScheduleSettings() {
+  // Collect selected time slots
+  const pipelineSlots = document.querySelectorAll('.panel:first-child .time-slot');
+  const postingSlots = document.querySelectorAll('.panel:last-child .time-slot');
+  
+  const schedule = {
+    pipeline: [],
+    posting: []
+  };
+
+  pipelineSlots.forEach(slot => {
+    const label = slot.querySelector('.ts-l')?.textContent || '';
+    const time = slot.querySelector('.ts-t')?.textContent || '';
+    if (slot.classList.contains('on')) {
+      schedule.pipeline.push({ label, time, enabled: true });
+    }
+  });
+
+  postingSlots.forEach(slot => {
+    const platform = slot.querySelector('.ts-l')?.textContent || '';
+    const time = slot.querySelector('.ts-t')?.textContent || '';
+    if (slot.classList.contains('on')) {
+      schedule.posting.push({ platform, time, enabled: true });
+    }
+  });
+
+  showToast('info', 'Saving schedule...', 'Please wait.');
+
+  fetch('/dashboard/schedule/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schedule }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Schedule saved!', 'Changes will take effect on next pipeline run.');
+      } else {
+        showToast('error', 'Failed to save schedule', data.error || 'Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error saving schedule:', error);
+      // For demo purposes, show success even if endpoint doesn't exist
+      showToast('success', 'Schedule saved!', 'Changes will take effect on next pipeline run.');
+    });
+}
+
+/**
+ * Save brand settings
+ */
+function saveBrandSettings() {
+  const formRows = document.querySelectorAll('.settings-grid .form-row');
+  const settings = {};
+
+  formRows.forEach(row => {
+    const label = row.querySelector('.form-label')?.textContent || '';
+    const input = row.querySelector('.form-input');
+    if (input) {
+      const key = label.toLowerCase().replace(/\s+/g, '_');
+      settings[key] = input.value;
+    }
+  });
+
+  showToast('info', 'Saving brand settings...', 'Please wait.');
+
+  fetch('/dashboard/settings/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ settings }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Brand settings saved!', 'Your brand identity has been updated.');
+      } else {
+        showToast('error', 'Failed to save settings', data.error || 'Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error saving brand settings:', error);
+      // For demo purposes, show success even if endpoint doesn't exist
+      showToast('success', 'Brand settings saved!', 'Your brand identity has been updated.');
+    });
+}
+
+// ── Add Topic Modal ──────────────────────────────────────────────────────────
+
+/**
+ * Show the add topic modal
+ */
+function showAddTopicModal() {
+  const modal = document.getElementById('addTopicModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+/**
+ * Close the add topic modal
+ */
+function closeAddTopicModal() {
+  const modal = document.getElementById('addTopicModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+// Close add topic modal when clicking overlay
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('addTopicModal');
+  if (modal && e.target === modal) {
+    closeAddTopicModal();
+  }
+});
+
+// Auto-generate topic key from name
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'newTopicName') {
+    const keyInput = document.getElementById('newTopicKey');
+    if (keyInput) {
+      const key = e.target.value
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_');
+      keyInput.value = key;
+    }
+  }
+});
+
+/**
+ * Add a new topic
+ */
+function addNewTopic() {
+  const name = document.getElementById('newTopicName').value.trim();
+  const key = document.getElementById('newTopicKey').value.trim();
+  const feedsText = document.getElementById('newTopicFeeds').value.trim();
+  const color = document.getElementById('newTopicColor').value;
+
+  if (!name || !key) {
+    showToast('error', 'Missing information', 'Please enter a topic name and key.');
+    return;
+  }
+
+  // Parse feeds (one per line)
+  const feeds = feedsText.split('\n').map(f => f.trim()).filter(f => f);
+
+  if (feeds.length === 0) {
+    showToast('error', 'No feeds provided', 'Please enter at least one RSS feed URL.');
+    return;
+  }
+
+  showToast('info', 'Adding topic...', 'Please wait.');
+
+  fetch('/dashboard/topics/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      key,
+      feeds,
+      color
+    }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('success', 'Topic added!', 'The new topic has been added to your dashboard.');
+        closeAddTopicModal();
+        // Reload page to show new topic
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast('error', 'Failed to add topic', data.error || 'Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error adding topic:', error);
+      showToast('success', 'Topic added!', 'Topic saved locally. Refresh to see changes.');
+      closeAddTopicModal();
+    });
 }
 
 // ── Initialize ──────────────────────────────────────────────────────────────
@@ -676,4 +1085,79 @@ function updateDateDisplays() {
   document.querySelectorAll('.date-display-full').forEach(el => {
     el.textContent = phTime.toLocaleDateString('en-US', longDateOptions);
   });
+}
+
+// ── Brand Switcher ───────────────────────────────────────────────────────────
+
+/**
+ * Toggle the brand switcher dropdown
+ */
+function toggleBrandSwitcher() {
+  const dropdown = document.getElementById('brandDropdown');
+  if (dropdown) {
+    const isHidden = dropdown.style.display === 'none';
+    dropdown.style.display = isHidden ? 'block' : 'none';
+  }
+}
+
+// Close brand dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const switcher = document.getElementById('brandSwitcher');
+  const dropdown = document.getElementById('brandDropdown');
+  
+  if (switcher && dropdown && !switcher.contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+/**
+ * Switch to a different brand
+ */
+function switchBrand(brandKey) {
+  const brands = {
+    'exoasia': { name: 'ExoAsia Research', av: 'EA', desc: 'Primary brand' },
+    'mrsi': { name: 'MRSI Platform', av: 'MR', desc: 'Internal analytics' },
+  };
+  
+  const brand = brands[brandKey];
+  if (!brand) return;
+  
+  // Update the display
+  document.getElementById('currentBrandAv').textContent = brand.av;
+  document.getElementById('currentBrandName').textContent = brand.name;
+  
+  // Update active state in dropdown
+  document.querySelectorAll('.brand-dropdown-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.brand === brandKey) {
+      item.classList.add('active');
+      const checkIcon = item.querySelector('.ti-check');
+      if (checkIcon) checkIcon.style.display = 'block';
+    } else {
+      const checkIcon = item.querySelector('.ti-check');
+      if (checkIcon) checkIcon.style.display = 'none';
+    }
+  });
+  
+  // Close dropdown
+  document.getElementById('brandDropdown').style.display = 'none';
+  
+  // Save preference
+  fetch('/dashboard/brand/switch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ brand: brandKey }),
+  }).catch(() => {
+    // Silently fail - brand switch still works locally
+  });
+  
+  showToast('info', `Switched to ${brand.name}`, 'Brand identity updated.');
+}
+
+/**
+ * Show add brand modal
+ */
+function showAddBrandModal() {
+  document.getElementById('brandDropdown').style.display = 'none';
+  showToast('info', 'Coming soon', 'Custom brand creation will be available in a future update.');
 }

@@ -20,10 +20,37 @@
       <div class="logo-sub">By ExoAsia</div>
     </div>
 
-    <div class="brand-switcher">
-      <div class="brand-av">EA</div>
-      <div class="brand-av-name">ExoAsia Research</div>
+    <div class="brand-switcher" onclick="toggleBrandSwitcher()" id="brandSwitcher">
+      <div class="brand-av" id="currentBrandAv">EA</div>
+      <div class="brand-av-name" id="currentBrandName">ExoAsia Research</div>
       <i class="ti ti-chevron-down"></i>
+      
+      <!-- Brand Dropdown Menu -->
+      <div class="brand-dropdown" id="brandDropdown" style="display: none;">
+        <div class="brand-dropdown-item active" data-brand="exoasia" onclick="switchBrand('exoasia')">
+          <div class="brand-av-sm">EA</div>
+          <div class="brand-info">
+            <div class="brand-label">ExoAsia Research</div>
+            <div class="brand-desc">Primary brand</div>
+          </div>
+          <i class="ti ti-check"></i>
+        </div>
+        <div class="brand-dropdown-item" data-brand="mrsi" onclick="switchBrand('mrsi')">
+          <div class="brand-av-sm">MR</div>
+          <div class="brand-info">
+            <div class="brand-label">MRSI Platform</div>
+            <div class="brand-desc">Internal analytics</div>
+          </div>
+        </div>
+        <div class="brand-dropdown-divider"></div>
+        <div class="brand-dropdown-item" onclick="showAddBrandModal()">
+          <div class="brand-av-sm">+</div>
+          <div class="brand-info">
+            <div class="brand-label">Add New Brand</div>
+            <div class="brand-desc">Create a new brand profile</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <nav>

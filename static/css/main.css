@@ -1320,3 +1320,89 @@ select.form-input {
     display: none;
   }
 }
+
+/* ── Brand Switcher Dropdown ────────────────────────────────────────────────── */
+
+.brand-switcher {
+  position: relative;
+  cursor: pointer;
+}
+
+.brand-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  z-index: 200;
+  padding: 6px;
+}
+
+.brand-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.brand-dropdown-item:hover {
+  background: var(--purple-xxlight);
+}
+
+.brand-dropdown-item.active {
+  background: var(--purple-xxlight);
+}
+
+.brand-dropdown-item.active .brand-label {
+  color: var(--purple);
+  font-weight: 600;
+}
+
+.brand-av-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--off2);
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.brand-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.brand-desc {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.brand-dropdown-item .ti-check {
+  color: var(--purple);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.brand-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}

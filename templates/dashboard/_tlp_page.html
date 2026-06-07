@@ -98,6 +98,48 @@
     </div>
   </div>
 
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="editTlpModal" style="display: none;">
+    <div class="modal-content modal-content-large">
+      <div class="modal-header">
+        <h3>Edit TLP Content</h3>
+        <button class="modal-close" onclick="closeEditTlpModal()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editTopicKey" value="">
+        <input type="hidden" id="editPieceIndex" value="">
+        
+        <div class="form-row">
+          <label class="form-label">Platform</label>
+          <input class="form-input" id="editPlatform" readonly style="background: var(--off);">
+        </div>
+        
+        <div class="form-row">
+          <label class="form-label">Angle</label>
+          <input class="form-input" id="editAngle" placeholder="Content angle/hook">
+        </div>
+        
+        <div class="form-row form-span-full">
+          <label class="form-label">Content</label>
+          <textarea class="form-input form-textarea" id="editContent" rows="8" placeholder="Enter your content..."></textarea>
+        </div>
+        
+        <div class="form-row form-span-full">
+          <label class="form-label">Posting Notes</label>
+          <textarea class="form-input form-textarea" id="editNotes" rows="4" placeholder="Optional posting/production notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeEditTlpModal()">Cancel</button>
+        <button class="btn btn-purple" onclick="saveEditedTLP()">
+          <i class="ti ti-check"></i> Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
   {% for topic_key, payload in tlp.items() %}
   <section class="panel">
     <div class="panel-header">
@@ -113,8 +155,8 @@
         <div class="p-status">{{ piece.get("angle", "Generated content") }}</div>
       </div>
       <span class="sched-badge">{{ piece.get("format", "Ready") }}</span>
-      <button class="btn-sm btn-sm-lime" type="button"><i class="ti ti-player-play"></i> Post Now</button>
-      <button class="btn-sm" type="button"><i class="ti ti-edit"></i> Edit</button>
+      <button class="btn-sm btn-sm-lime" type="button" onclick="postNowTLP('{{ topic_key }}', {{ loop.index0 }})"><i class="ti ti-player-play"></i> Post Now</button>
+      <button class="btn-sm" type="button" onclick="editTLPPiece('{{ topic_key }}', {{ loop.index0 }})"><i class="ti ti-edit"></i> Edit</button>
       <button class="btn-sm" type="button" onclick="downloadTLPPiece('{{ topic_key }}', '{{ piece.get("platform", "") }}')">
         <i class="ti ti-download"></i>
       </button>

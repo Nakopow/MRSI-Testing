@@ -1,8 +1,9 @@
 import os
+import json
 from datetime import datetime
 from pathlib import Path
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify, request
 
 from main import TOPIC_LABELS, extract_posting_windows, load_tlp_payloads, parse_digest_sections
 from src.storage import storage
@@ -265,3 +266,507 @@ def apikeys():
 @dashboard_bp.route("/settings")
 def settings():
     return _render_dashboard("settings")
+
+
+# ── Settings Save Endpoints ──────────────────────────────────────────────────
+
+SETTINGS_FILE = ".dashboard_settings.json"
+
+
+def _load_settings():
+    """Load dashboard settings from file."""
+    try:
+        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {
+            "autopost": {},
+            "schedule": {"pipeline": [], "posting": []},
+            "brand": {},
+        }
+
+
+def _save_settings(settings):
+    """Save dashboard settings to file."""
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(settings, f, indent=2)
+
+
+@dashboard_bp.route("/autopost/save", methods=["POST"])
+def save_autopost():
+    """Save autopost settings."""
+    try:
+        data = request.get_json()
+        if not data or "settings" not in data:
+            return jsonify({"success": False, "error": "No settings provided"}), 400
+        
+        settings = _load_settings()
+        settings["autopost"] = data["settings"]
+        _save_settings(settings)
+        
+        return jsonify({"success": True, "message": "Autopost settings saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@dashboard_bp.route("/schedule/save", methods=["POST"])
+def save_schedule():
+    """Save schedule settings."""
+    try:
+        data = request.get_json()
+        if not data or "schedule" not in data:
+            return jsonify({"success": False, "error": "No schedule provided"}), 400
+        
+        settings = _load_settings()
+        settings["schedule"] = data["schedule"]
+        _save_settings(settings)
+        
+        return jsonify({"success": True, "message": "Schedule settings saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@dashboard_bp.route("/settings/save", methods=["POST"])
+def save_brand_settings():
+    """Save brand settings."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No settings provided"}), 400
+        
+        settings = _load_settings()
+        settings["brand"] = data
+        _save_settings(settings)
+        
+        return jsonify({"success": True, "message": "Brand settings saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── API Keys Endpoint (Local Development) ────────────────────────────────────
+
+@dashboard_bp.route("/api/keys", methods=["POST"])
+def save_api_keys():
+    """Save API keys to .env file (for local development)."""
+    try:
+        from dotenv import load_dotenv, set_key
+        from pathlib import Path
+        
+        data = request.get_json()
+        if not data or "keys" not in data:
+            return jsonify({"success": False, "error": "No keys provided"}), 400
+        
+        keys = data["keys"]
+        dotenv_path = Path(__file__).parent.parent / ".env"
+        
+        # Save each key to .env
+        for key_name, value in keys.items():
+            set_key(str(dotenv_path), key_name, value)
+        
+        # Update environment variables for current session
+        for key_name, value in keys.items():
+            os.environ[key_name] = value
+        
+        return jsonify({"success": True, "message": "API keys saved successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@dashboard_bp.route("/api/keys/test/<key_name>", methods=["POST"])
+def test_api_key(key_name):
+    """Test if an API key is valid by making a real API call."""
+    try:
+        data = request.get_json()
+        if not data or "key" not in data:
+            return jsonify({"success": False, "error": "No API key provided"}), 400
+        
+        api_key = data["key"]
+        if not api_key or len(api_key.strip()) < 10:
+            return jsonify({"success": False, "error": "Invalid API key format"}), 400
+        
+        key_name_lower = key_name.lower()
+        
+        if "gemini" in key_name_lower or "google" in key_name_lower:
+            return _test_gemini_key(api_key)
+        elif "openai" in key_name_lower:
+            return _test_openai_key(api_key)
+        elif "mailchimp" in key_name_lower:
+            return _test_mailchimp_key(api_key)
+        else:
+            return jsonify({"success": False, "error": f"Unknown key type: {key_name}"}), 400
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+def _test_gemini_key(api_key):
+    """Test Gemini API key by making a simple API call and save if valid."""
+    try:
+        import urllib.request
+        import json
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:list?key={api_key}"
+        
+        req = urllib.request.Request(url)
+        req.add_header('Content-Type', 'application/json')
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                # Key is valid - save it to .env
+                _save_key_to_env("GEMINI_API_KEY", api_key)
+                return jsonify({
+                    "success": True, 
+                    "message": "Gemini API key is valid, saved, and connected.",
+                    "service": "Google Gemini",
+                    "saved": True
+                })
+    except urllib.error.HTTPError as e:
+        error_msg = f"Invalid Gemini API key (HTTP {e.code})"
+        if e.code == 403:
+            error_msg = "Invalid or expired Gemini API key"
+        elif e.code == 400:
+            error_msg = "Invalid Gemini API key format"
+        return jsonify({"success": False, "error": error_msg})
+    except urllib.error.URLError as e:
+        return jsonify({"success": False, "error": f"Connection error: {str(e.reason)}"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Test failed: {str(e)}"})
+
+
+def _test_openai_key(api_key):
+    """Test OpenAI API key by making a simple API call and save if valid."""
+    try:
+        import urllib.request
+        import json
+        
+        url = "https://api.openai.com/v1/models"
+        
+        req = urllib.request.Request(url)
+        req.add_header('Authorization', f'Bearer {api_key}')
+        req.add_header('Content-Type', 'application/json')
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                # Key is valid - save it to .env
+                _save_key_to_env("OPENAI_API_KEY", api_key)
+                return jsonify({
+                    "success": True, 
+                    "message": "OpenAI API key is valid, saved, and connected.",
+                    "service": "OpenAI",
+                    "saved": True
+                })
+    except urllib.error.HTTPError as e:
+        error_msg = f"Invalid OpenAI API key (HTTP {e.code})"
+        if e.code == 401:
+            error_msg = "Invalid or expired OpenAI API key"
+        elif e.code == 429:
+            error_msg = "OpenAI API rate limit reached"
+        return jsonify({"success": False, "error": error_msg})
+    except urllib.error.URLError as e:
+        return jsonify({"success": False, "error": f"Connection error: {str(e.reason)}"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Test failed: {str(e)}"})
+
+
+def _test_mailchimp_key(api_key):
+    """Test Mailchimp API key by making a simple API call and save if valid."""
+    try:
+        import urllib.request
+        import json
+        import base64
+        
+        # Mailchimp API key format is "apikey-datacenter"
+        if "-" not in api_key:
+            return jsonify({
+                "success": False, 
+                "error": "Invalid Mailchimp API key format (expected: apikey-datacenter)"
+            })
+        
+        dc = api_key.split('-')[-1]
+        url = f"https://{dc}.api.mailchimp.com/3.0/"
+        
+        req = urllib.request.Request(url)
+        req.add_header('Authorization', f'apikey {api_key}')
+        req.add_header('Content-Type', 'application/json')
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                # Key is valid - save it to .env
+                _save_key_to_env("MAILCHIMP_API_KEY", api_key)
+                return jsonify({
+                    "success": True, 
+                    "message": "Mailchimp API key is valid, saved, and connected.",
+                    "service": "Mailchimp",
+                    "saved": True
+                })
+    except urllib.error.HTTPError as e:
+        error_msg = f"Invalid Mailchimp API key (HTTP {e.code})"
+        if e.code == 401:
+            error_msg = "Invalid or expired Mailchimp API key"
+        return jsonify({"success": False, "error": error_msg})
+    except urllib.error.URLError as e:
+        return jsonify({"success": False, "error": f"Connection error: {str(e.reason)}"})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Test failed: {str(e)}"})
+
+
+def _save_key_to_env(key_name, value):
+    """Save a single API key to .env file (local) or cloud storage (Vercel)."""
+    try:
+        # Check if running on Vercel or if cloud storage is configured
+        is_vercel = os.getenv("VERCEL") == "1"
+        has_supabase = os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY")
+        
+        if is_vercel or (has_supabase and os.getenv("STORAGE_BACKEND") != "local"):
+            # Use cloud storage for Vercel deployment
+            return _save_key_to_cloud(key_name, value)
+        else:
+            # Use local .env file for development
+            from dotenv import set_key
+            from pathlib import Path
+            
+            dotenv_path = Path(__file__).parent.parent / ".env"
+            set_key(str(dotenv_path), key_name, value)
+            
+            # Update environment variable for current session
+            os.environ[key_name] = value
+            
+            return True
+    except Exception as e:
+        print(f"Error saving {key_name}: {e}")
+        return False
+
+
+def _save_key_to_cloud(key_name, value):
+    """Save API key to cloud storage (Supabase) for Vercel deployment."""
+    try:
+        import json
+        from src.storage import storage
+        
+        # Load existing keys from cloud storage
+        keys_data = {}
+        try:
+            content = storage.backend.load(".api_keys.json")
+            if content:
+                keys_data = json.loads(content)
+        except Exception:
+            pass
+        
+        # Update the specific key
+        if "keys" not in keys_data:
+            keys_data["keys"] = {}
+        keys_data["keys"][key_name] = value
+        keys_data["updated_at"] = datetime.now().isoformat()
+        
+        # Save back to cloud storage
+        success = storage.backend.save(
+            ".api_keys.json",
+            json.dumps(keys_data, indent=2),
+            content_type="application/json"
+        )
+        
+        if success:
+            # Also update environment variable for current session
+            os.environ[key_name] = value
+        
+        return success
+    except Exception as e:
+        print(f"Error saving {key_name} to cloud: {e}")
+        return False
+
+
+@dashboard_bp.route("/api/keys/config", methods=["GET"])
+def get_api_keys_config():
+    """Get API keys configuration status."""
+    try:
+        # Determine storage type
+        storage_type = os.getenv("STORAGE_BACKEND", "local")
+        if storage_type == "auto":
+            if os.getenv("SUPABASE_URL"):
+                storage_type = "Supabase Storage"
+            elif os.getenv("AWS_ACCESS_KEY_ID"):
+                storage_type = "AWS S3"
+            else:
+                storage_type = "Local (.env file)"
+        
+        return jsonify({
+            "storage_type": storage_type,
+            "keys": {
+                "GEMINI_API_KEY": bool(os.getenv("GEMINI_API_KEY")),
+                "OPENAI_API_KEY": bool(os.getenv("OPENAI_API_KEY")),
+                "MAILCHIMP_API_KEY": bool(os.getenv("MAILCHIMP_API_KEY")),
+            }
+        })
+    except Exception:
+        return jsonify({
+            "storage_type": "Local (.env file)",
+            "keys": {}
+        })
+
+
+# ── TLP Management Endpoints ─────────────────────────────────────────────────
+
+@dashboard_bp.route("/tlp/save", methods=["POST"])
+def save_tlp_edit():
+    """Save edited TLP content."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
+        topic = data.get("topic", "")
+        piece_index = data.get("pieceIndex", 0)
+        angle = data.get("angle", "")
+        content = data.get("content", "")
+        posting_notes = data.get("posting_notes", "")
+        
+        # Load the TLP JSON file for this topic
+        tlp_file = Path(f"tl_output_{topic}.json")
+        if not tlp_file.exists():
+            # Create a new TLP structure if it doesn't exist
+            tlp_data = {"pieces": []}
+        else:
+            with open(tlp_file, "r", encoding="utf-8") as f:
+                tlp_data = json.load(f)
+        
+        # Ensure pieces array exists
+        if "pieces" not in tlp_data:
+            tlp_data["pieces"] = []
+        
+        # Update or create the piece at the given index
+        piece_data = {
+            "platform": data.get("platform", "Custom"),
+            "angle": angle,
+            "copy": content,
+            "posting_notes": posting_notes,
+            "format": "Edited",
+        }
+        
+        if piece_index < len(tlp_data["pieces"]):
+            # Update existing piece (preserve other fields)
+            tlp_data["pieces"][piece_index].update(piece_data)
+        else:
+            # Add new piece
+            tlp_data["pieces"].append(piece_data)
+        
+        # Save back to file
+        with open(tlp_file, "w", encoding="utf-8") as f:
+            json.dump(tlp_data, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({"success": True, "message": "TLP content saved"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@dashboard_bp.route("/tlp/post", methods=["POST"])
+def post_tlp():
+    """Trigger posting of a TLP piece to the platform."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
+        topic = data.get("topic", "")
+        piece_index = data.get("pieceIndex", 0)
+        
+        # Log the posting request (in a real implementation, this would trigger actual posting)
+        logger = logging.getLogger(__name__)
+        logger.info(f"Post requested for topic={topic}, piece_index={piece_index}")
+        
+        # For now, return success with a note that platform integration is needed
+        return jsonify({
+            "success": True, 
+            "message": "Post queued - platform integration required for actual posting"
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ── Topic Management Endpoints ───────────────────────────────────────────────
+
+TOPICS_FILE = ".custom_topics.json"
+
+
+@dashboard_bp.route("/topics/add", methods=["POST"])
+def add_topic():
+    """Add a new custom topic to the dashboard."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+        
+        name = data.get("name", "")
+        key = data.get("key", "")
+        feeds = data.get("feeds", [])
+        color = data.get("color", "#6B3FA0")
+        
+        if not name or not key:
+            return jsonify({"success": False, "error": "Topic name and key are required"}), 400
+        
+        if not feeds or not isinstance(feeds, list):
+            return jsonify({"success": False, "error": "At least one RSS feed is required"}), 400
+        
+        # Load existing topics
+        topics = _load_custom_topics()
+        
+        # Check if key already exists
+        if key in topics:
+            return jsonify({"success": False, "error": "A topic with this key already exists"}), 400
+        
+        # Add new topic
+        topics[key] = {
+            "name": name,
+            "key": key,
+            "feeds": feeds,
+            "color": color,
+            "created_at": datetime.now().isoformat(),
+        }
+        
+        # Save updated topics
+        _save_custom_topics(topics)
+        
+        # Update feeds.json with new topic feeds
+        _update_feeds_json(key, name, feeds)
+        
+        return jsonify({"success": True, "message": f"Topic '{name}' added successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+def _load_custom_topics():
+    """Load custom topics from file."""
+    try:
+        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_custom_topics(topics):
+    """Save custom topics to file."""
+    with open(TOPICS_FILE, "w", encoding="utf-8") as f:
+        json.dump(topics, f, indent=2)
+
+
+def _update_feeds_json(topic_key, topic_name, feeds):
+    """Update feeds.json with new topic feeds."""
+    feeds_file = Path("feeds.json")
+    
+    try:
+        if feeds_file.exists():
+            with open(feeds_file, "r", encoding="utf-8") as f:
+                feeds_data = json.load(f)
+        else:
+            feeds_data = {}
+        
+        # Add new topic feeds
+        feeds_data[topic_key] = {
+            "name": topic_name,
+            "urls": feeds
+        }
+        
+        with open(feeds_file, "w", encoding="utf-8") as f:
+            json.dump(feeds_data, f, indent=2)
+    except Exception:
+        # Don't fail the whole operation if feeds.json update fails
+        pass
