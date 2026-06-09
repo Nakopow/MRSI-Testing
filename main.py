@@ -123,6 +123,13 @@ def run_formatter(output_txt: str) -> None:
     for key, data in topics.items():
         print(f"  Generating {data['display']} ...")
         content = daily_formatter.parse_topic(data["lines"])
+
+        # Skip topics where Gemini failed — avoid writing a useless "error" DOCX
+        title = content.get("title", "")
+        if title.startswith("[GENERATION_FAILED]") or title.startswith("Error:"):
+            print(f"    SKIP -> {key} had a generation error, no DOCX written")
+            continue
+
         filename = f"Exoasia_MRSI_DailyInsight_{date_slug}_{data['slug']}.docx"
         out_path = os.path.join(insights_dir, filename)
         try:

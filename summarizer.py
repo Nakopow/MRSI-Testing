@@ -326,6 +326,9 @@ def call_gemini_directly(prompt: str) -> str:
     assert _gemini_api_keys is not None  # for type checkers
     attempts = max(1, len(_gemini_api_keys))
     per_key_service_retries = 3
+    # Waits when rate-limited and there is no other key to rotate to (single-key setup)
+    rate_limit_waits = [15, 30, 60]
+    rate_limit_attempt = 0
     base_backoff_seconds = 2
     last_exc: Optional[Exception] = None
 
@@ -367,13 +370,26 @@ def call_gemini_directly(prompt: str) -> str:
 
                 prev_label = _gemini_key_label or "current key"
                 if not _rotate_gemini_key():
+                    # Single-key setup — wait and retry instead of giving up immediately
+                    if rate_limit_attempt < len(rate_limit_waits):
+                        wait = rate_limit_waits[rate_limit_attempt]
+                        rate_limit_attempt += 1
+                        print(
+                            f"Rate limit hit on {prev_label} (no other keys to rotate to); "
+                            f"waiting {wait}s before retry {rate_limit_attempt}/{len(rate_limit_waits)}..."
+                        )
+                        time.sleep(wait)
+                        continue
                     break
                 next_label = _gemini_key_label or "next key"
                 print(f"Gemini request failed with {prev_label}; rotating to {next_label}...")
                 break
 
     label = _gemini_key_label or "current key"
-    raise RuntimeError(f"Gemini request failed after trying {attempts} key(s) (last: {label}): {last_exc}") from last_exc
+    raise RuntimeError(
+        f"Gemini request failed after trying {attempts} key(s) "
+        f"with {rate_limit_attempt} rate-limit retries (last: {label}): {last_exc}"
+    ) from last_exc
 
 
 def generate_daily_digest(articles_by_topic: dict, api_key: str = None) -> str:
@@ -460,10 +476,16 @@ def generate_daily_digest(articles_by_topic: dict, api_key: str = None) -> str:
                 f.write(summary)
             print(f"✅ {topic} summary saved")
 
+            # Brief pause between topics to avoid rate-limit spikes
+            time.sleep(3)
+
         except Exception as e:
-            print(f"Error generating {topic} summary: {e}")
-            digest_parts.append(f"\n## {display_name.upper()}\n")
-            digest_parts.append(f"Error: Failed to generate summary\n")
+            print(f"⚠️ Error generating {topic} summary ({type(e).__name__}): {e}")
+            # Mark section as failed — formatter will skip DOCX for this topic
+            digest_parts.append(f"\n{'=' * 80}\n")
+            digest_parts.append(f"## {display_name.upper()}\n")
+            digest_parts.append(f"{'=' * 80}\n\n")
+            digest_parts.append(f"[GENERATION_FAILED] {type(e).__name__}: {e}\n")
     
     # Create empty summary files for hardcoded topics that had no articles
     for topic in TOPICS:
