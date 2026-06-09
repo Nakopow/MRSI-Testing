@@ -827,6 +827,16 @@ function saveAutopostSettings() {
 }
 
 /**
+ * Select a pipeline schedule slot (radio-button behaviour — only one active at a time)
+ */
+function selectPipelineSlot(el) {
+  const group = document.getElementById('pipeline-slot-group');
+  if (!group) return;
+  group.querySelectorAll('.time-slot').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/**
  * Save schedule settings
  */
 function saveScheduleSettings() {

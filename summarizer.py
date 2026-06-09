@@ -120,6 +120,7 @@ def _load_gemini_api_keys() -> List[str]:
     Load Gemini API keys from:
       1) explicit environment variable (may be comma-separated)
       2) all GEMINI_API_KEY lines in .env (in order)
+      3) cloud storage .api_keys.json (Supabase/S3 fallback for Vercel/Railway)
     """
     keys: List[str] = []
 
@@ -128,6 +129,20 @@ def _load_gemini_api_keys() -> List[str]:
         keys.extend(_split_multi_value(env_val))
 
     keys.extend(_read_dotenv_multi_values(_project_root() / ".env", "GEMINI_API_KEY"))
+
+    # Cloud storage fallback (covers Vercel where .env is absent)
+    if not keys:
+        try:
+            from src.storage import storage as _storage
+            content = _storage.backend.load(".api_keys.json")
+            if content:
+                data = json.loads(content)
+                cloud_key = data.get("keys", {}).get("GEMINI_API_KEY", "").strip()
+                if cloud_key:
+                    os.environ["GEMINI_API_KEY"] = cloud_key
+                    keys.append(cloud_key)
+        except Exception:
+            pass
 
     # De-duplicate while preserving order
     deduped: List[str] = []

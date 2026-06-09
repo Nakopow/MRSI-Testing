@@ -12,10 +12,10 @@
       <i class="ti ti-cpu panel-icon-purple"></i>
       <div class="panel-title">Pipeline Run Schedule</div>
     </div>
-    <div class="time-grid">
-      <div class="time-slot on"><i class="ti ti-clock"></i><div><div class="ts-l">Daily Run</div><div class="ts-t">6:00 AM PHT</div></div></div>
-      <div class="time-slot"><i class="ti ti-calendar"></i><div><div class="ts-l">Weekly Only</div><div class="ts-t">Mon 6:00 AM</div></div></div>
-      <div class="time-slot"><i class="ti ti-player-play"></i><div><div class="ts-l">Manual Only</div><div class="ts-t">On-demand</div></div></div>
+    <div class="time-grid" id="pipeline-slot-group">
+      <div class="time-slot on" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-clock"></i><div><div class="ts-l">Daily Run</div><div class="ts-t">6:00 AM PHT</div></div></div>
+      <div class="time-slot" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-calendar"></i><div><div class="ts-l">Weekly Only</div><div class="ts-t">Mon 6:00 AM</div></div></div>
+      <div class="time-slot" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-player-play"></i><div><div class="ts-l">Manual Only</div><div class="ts-t">On-demand</div></div></div>
     </div>
   </section>
 
@@ -26,7 +26,7 @@
     </div>
     <div class="time-grid">
       {% for row in platform_rows[:6] %}
-      <div class="time-slot on">
+      <div class="time-slot on" style="cursor:pointer" onclick="this.classList.toggle('on')">
         <i class="ti {{ row.icon }}"></i>
         <div>
           <div class="ts-l">{{ row.platform }}</div>
