@@ -1,0 +1,15 @@
+flask==3.0.0
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+lxml>=4.9.0
+feedparser>=6.0.0
+google-generativeai>=0.8.0
+python-dotenv>=1.0.0
+gunicorn>=21.2.0
+python-docx>=1.1.0
+
+certifi>=2024.0.0
+
+# Cloud Storage Backends (for Vercel deployment)
+supabase>=2.0.0
+boto3>=1.26.0

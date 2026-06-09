@@ -67,7 +67,7 @@ venv.bak/
 
 # Generated output files
 *.txt
-!requirement.txt
+!requirements.txt
 !README.md
 ai_articles.txt
 cybersecurity_articles.txt
