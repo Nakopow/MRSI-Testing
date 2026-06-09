@@ -311,17 +311,25 @@ def save_autopost():
 
 @dashboard_bp.route("/schedule/save", methods=["POST"])
 def save_schedule():
-    """Save schedule settings."""
+    """Save schedule settings and apply to the running scheduler."""
     try:
         data = request.get_json()
         if not data or "schedule" not in data:
             return jsonify({"success": False, "error": "No schedule provided"}), 400
-        
+
+        schedule = data["schedule"]
         settings = _load_settings()
-        settings["schedule"] = data["schedule"]
+        settings["schedule"] = schedule
         _save_settings(settings)
-        
-        return jsonify({"success": True, "message": "Schedule settings saved"})
+
+        # Update the live scheduler if it's running
+        try:
+            from src.scheduler import apply_schedule
+            apply_schedule(schedule)
+        except Exception:
+            pass
+
+        return jsonify({"success": True, "message": "Schedule saved and applied"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

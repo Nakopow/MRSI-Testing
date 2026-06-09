@@ -692,5 +692,27 @@ function downloadInsight(filename) {
 // Note: Date display is now controlled by server-side now_label
 // which shows the date of the most recent insight file.
 // No client-side date override needed.
+
+// ── Auto-resume polling if generation was already running on page load ────────
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/v2/generation-status')
+    .then(r => r.json())
+    .then(s => {
+      if (!s.running) return;
+      const btn = document.getElementById('genBtn');
+      const statusEl = document.getElementById('genStatus');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader spin"></i> Generating…';
+      }
+      if (statusEl) {
+        statusEl.className = 'gen-status running';
+        statusEl.innerHTML = '<i class="ti ti-loader spin"></i> Running insight pipeline…';
+      }
+      showProgress();
+      pollStatus();
+    })
+    .catch(() => {});
+});
 </script>
 {% endblock %}

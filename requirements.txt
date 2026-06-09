@@ -10,6 +10,10 @@ python-docx>=1.1.0
 
 certifi>=2024.0.0
 
+# Scheduling (for Railway/long-running deployments)
+APScheduler>=3.10.0
+pytz>=2023.3
+
 # Cloud Storage Backends (for Vercel deployment)
 supabase>=2.0.0
 boto3>=1.26.0

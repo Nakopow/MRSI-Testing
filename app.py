@@ -23,6 +23,10 @@ def create_app() -> Flask:
     def healthcheck():
         return {"status": "ok"}, 200
 
+    # Start background scheduler (skipped automatically on Vercel)
+    from src.scheduler import init_scheduler
+    init_scheduler()
+
     return app
 
 
