@@ -393,58 +393,66 @@ def generate_daily_digest(articles_by_topic: dict, api_key: str = None) -> str:
     digest_parts.append(f"## {today_date}\n")
     digest_parts.append("=" * 80 + "\n\n")
     
-    # Generate summary for each topic
-    for topic in TOPICS:
-        if topic not in articles_by_topic or not articles_by_topic[topic]:
+    _GENERIC_PROMPT = (
+        "You are a professional news analyst. Today's date is {today_date}.\n"
+        "Please provide a comprehensive summary of the following {topic} news articles.\n"
+        "Structure your response with:\n"
+        "1. Executive Summary (2-3 sentences)\n"
+        "2. Key Developments (bullet points)\n"
+        "3. Implications & Outlook\n\n"
+        "Focus on the most significant trends and insights."
+    )
+
+    # Generate summary for every topic that has articles (including custom topics)
+    for topic in articles_by_topic:
+        if not articles_by_topic[topic]:
             print(f"⚠️ No {topic} articles found, skipping...")
             continue
-        
-        display_name = TOPIC_DISPLAY_NAMES.get(topic, topic.upper())
+
+        display_name = TOPIC_DISPLAY_NAMES.get(topic, topic.replace("_", " ").title())
         print(f"Generating {display_name} summary...")
-        
+
         # Get top 5 articles for this topic
         articles = articles_by_topic[topic][:5]
-        
+
         # Build sources list
         sources = "\n".join([
             f"SOURCE {i+1}: {art['title']} - {art['published']}"
             for i, art in enumerate(articles)
         ])
-        
-        # Get prompt template
+
+        # Get prompt template — fall back to generic for custom topics
         prompt_template = prompts_config.get(topic, {}).get("prompt", "")
         if not prompt_template:
-            print(f"Warning: No prompt found for {topic}")
-            continue
-        
+            print(f"No prompt found for '{topic}', using generic prompt.")
+            prompt_template = _GENERIC_PROMPT.replace("{topic}", display_name)
+
         # Format prompt with today's date
         full_prompt = prompt_template.format(today_date=today_date)
         full_prompt += f"\n\n{sources}"
-        
+
         try:
-            # Call Gemini
             summary = call_gemini_directly(full_prompt)
-            
-            # Add to digest
+
             digest_parts.append(f"\n{'=' * 80}\n")
             digest_parts.append(f"## {display_name.upper()}\n")
             digest_parts.append(f"{'=' * 80}\n\n")
             digest_parts.append(summary)
             digest_parts.append("\n")
-            
-            # Save individual topic summary
-            with open(SUMMARY_FILES[topic], "w", encoding="utf-8") as f:
+
+            summary_file = SUMMARY_FILES.get(topic, f"{topic}_summary.txt")
+            with open(summary_file, "w", encoding="utf-8") as f:
                 f.write(summary)
             print(f"✅ {topic} summary saved")
-            
+
         except Exception as e:
             print(f"Error generating {topic} summary: {e}")
             digest_parts.append(f"\n## {display_name.upper()}\n")
             digest_parts.append(f"Error: Failed to generate summary\n")
     
-    # Create summary files for topics with no articles
+    # Create empty summary files for hardcoded topics that had no articles
     for topic in TOPICS:
-        if topic not in articles_by_topic or not articles_by_topic[topic]:
+        if not articles_by_topic.get(topic):
             display_name = TOPIC_DISPLAY_NAMES.get(topic, topic.upper())
             no_articles_msg = f"No {display_name} articles found for today.\n"
             with open(SUMMARY_FILES[topic], "w", encoding="utf-8") as f:

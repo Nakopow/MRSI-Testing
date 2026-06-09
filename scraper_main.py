@@ -82,24 +82,26 @@ def main():
 
     # Write articles to topic files using context managers
     print("Saving articles to topic files...")
-    
-    for topic in ["ai", "cybersecurity", "web3"]:
+
+    saved = []
+    for topic, articles in articles_by_topic.items():
         with open(f"{topic}_articles.txt", "w", encoding="utf-8") as f:
             f.write(f"=== {topic.upper()} ===\n\n")
 
-            for article in articles_by_topic.get(topic, []):
+            for article in articles:
                 f.write(f"\"{article['title']}\"\n")
                 f.write(f"{article['published']}\n\n")
-                
+
                 wrapped_lines = textwrap.wrap(article['body'], width=100)
                 f.write("\n")
                 for line in wrapped_lines:
                     f.write(line + "\n")
-                
+
                 f.write(f"{article['link']}\n")
                 f.write("\n" + "=" * 80 + "\n\n")
+        saved.append(f"{topic}_articles.txt")
 
-    print("Articles saved to ai_articles.txt, cybersecurity_articles.txt, web3_articles.txt")
+    print(f"Articles saved to {', '.join(saved)}")
 
 
 if __name__ == "__main__":

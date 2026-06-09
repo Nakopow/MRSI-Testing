@@ -373,7 +373,7 @@
     <div class="pieces-grid">
       {% for piece in payload.get('pieces', []) %}
       {% set pname = piece.get('platform', '') %}
-      <div class="piece-card" data-platform="{{ pname }}" id="piece-{{ key }}-{{ loop.index }}">
+      <div class="piece-card open" data-platform="{{ pname }}" id="piece-{{ key }}-{{ loop.index }}">
 
         <!-- header (click to expand) -->
         <div class="piece-header" onclick="togglePiece('piece-{{ key }}-{{ loop.index }}')">

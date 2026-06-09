@@ -398,7 +398,7 @@
 
     {% if entries %}
     {% for entry in entries %}
-    <div class="insight-entry" id="insight-{{ key }}-{{ loop.index }}">
+    <div class="insight-entry open" id="insight-{{ key }}-{{ loop.index }}">
       <div class="insight-entry-header"
            onclick="toggleInsight('insight-{{ key }}-{{ loop.index }}')">
         <span class="insight-date-badge">{{ entry.date }}</span>
