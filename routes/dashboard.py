@@ -347,26 +347,19 @@ def save_brand_settings():
 
 @dashboard_bp.route("/api/keys", methods=["POST"])
 def save_api_keys():
-    """Save API keys to .env file (for local development)."""
+    """Save API keys — cloud storage on Vercel, .env file locally."""
     try:
-        from dotenv import load_dotenv, set_key
-        from pathlib import Path
-        
         data = request.get_json()
         if not data or "keys" not in data:
             return jsonify({"success": False, "error": "No keys provided"}), 400
-        
-        keys = data["keys"]
-        dotenv_path = Path(__file__).parent.parent / ".env"
-        
-        # Save each key to .env
+
+        keys = {k: v for k, v in data["keys"].items() if v and str(v).strip()}
+        if not keys:
+            return jsonify({"success": False, "error": "No non-empty keys provided"}), 400
+
         for key_name, value in keys.items():
-            set_key(str(dotenv_path), key_name, value)
-        
-        # Update environment variables for current session
-        for key_name, value in keys.items():
-            os.environ[key_name] = value
-        
+            _save_key_to_env(key_name, value)
+
         return jsonify({"success": True, "message": "API keys saved successfully"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

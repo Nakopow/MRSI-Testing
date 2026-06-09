@@ -142,7 +142,7 @@ def run_formatter(output_txt: str) -> None:
     print(f"\n  Daily Insight formatter done. {success_count}/{len(topics)} .docx file(s) written to insights/")
 
 
-def run_tl_pipeline(output_txt: str, platforms: list = None, topic: str = None) -> None:
+def run_tl_pipeline(output_txt: str, platforms: list = None, topic: str = None, api_key: str = None) -> None:
     """
     Runs the Thought Leadership pipeline after the daily digest is ready.
 
@@ -175,14 +175,14 @@ def run_tl_pipeline(output_txt: str, platforms: list = None, topic: str = None) 
     print("STEP 3 — Thought Leadership Summarizer (tl_summarizer.py)")
     print("=" * 60)
 
-    gemini_key = os.environ.get("GEMINI_API_KEY")
+    gemini_key = api_key or os.environ.get("GEMINI_API_KEY")
     if not gemini_key:
         raise EnvironmentError(
             "GEMINI_API_KEY environment variable is not set. "
             "Export it before running: export GEMINI_API_KEY=your_key_here"
         )
-
-    
+    if api_key:
+        os.environ["GEMINI_API_KEY"] = api_key
 
     json_files = tl_summarizer.summarize_tl(
         gemini_key=gemini_key,

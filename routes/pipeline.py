@@ -15,6 +15,37 @@ from src.storage import storage
 pipeline_bp = Blueprint("pipeline", __name__)
 logger = logging.getLogger(__name__)
 
+
+def _resolve_api_key(request_data: dict = None) -> str:
+    """Return the best available Gemini API key.
+
+    Priority: request body → environment variable → cloud storage (.api_keys.json).
+    Sets os.environ so downstream modules (tl_summarizer) see it too.
+    """
+    if request_data:
+        key = request_data.get("api_key", "").strip()
+        if key:
+            os.environ["GEMINI_API_KEY"] = key
+            return key
+
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if key:
+        return key
+
+    try:
+        content = storage.backend.load(".api_keys.json")
+        if content:
+            data = json.loads(content)
+            key = data.get("keys", {}).get("GEMINI_API_KEY", "").strip()
+            if key:
+                os.environ["GEMINI_API_KEY"] = key
+                return key
+    except Exception:
+        pass
+
+    return ""
+
+
 # ── Pipeline State Management ──────────────────────────────────────────────────
 
 STATE_FILE = ".pipeline_state.json"
@@ -145,8 +176,11 @@ def generate_summary():
                 "required_step": "scraping"
             }), 400
         
+        data = request.get_json(silent=True) or {}
+        api_key = _resolve_api_key(data)
+
         _update_step_status("summarizing", "running")
-        
+
         def run_summarize_task():
             import time
             start = time.time()
@@ -206,7 +240,7 @@ def generate_summary():
                         articles_by_topic[topic] = articles
                 
                 # Generate digest
-                digest = generate_daily_digest(articles_by_topic)
+                digest = generate_daily_digest(articles_by_topic, api_key=api_key)
                 
                 # Save to local file AND cloud storage
                 with open("output.txt", "w", encoding="utf-8") as f:
@@ -366,13 +400,13 @@ def generate_tlp():
         platforms = None
         topic = None
         
-        if request.is_json:
-            data = request.get_json(silent=True) or {}
-            platforms = data.get("platforms")  # List of platform names or None for all
-            topic = data.get("topic")  # Single topic or "all"
-        
+        data = request.get_json(silent=True) or {}
+        platforms = data.get("platforms")
+        topic = data.get("topic")
+        api_key = _resolve_api_key(data)
+
         _update_step_status("tlp", "running")
-        
+
         def run_tlp_task():
             import time
             start = time.time()
@@ -380,9 +414,8 @@ def generate_tlp():
                 platform_str = f" (platforms: {', '.join(platforms)})" if platforms else ""
                 topic_str = f" (topic: {topic})" if topic and topic != "all" else ""
                 logger.info(f"Starting Thought Leadership pipeline{platform_str}{topic_str}...")
-                
-                # Pass parameters to the TL pipeline
-                run_tl_pipeline("output.txt", platforms=platforms, topic=topic)
+
+                run_tl_pipeline("output.txt", platforms=platforms, topic=topic, api_key=api_key)
                 
                 duration = time.time() - start
                 _update_step_status("tlp", "idle", duration)
@@ -418,6 +451,9 @@ def run_full_pipeline():
     4. Generate Thought Leadership packs
     """
     if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        api_key = _resolve_api_key(data)
+
         def run_all_tasks():
             import time
             start = time.time()
@@ -475,19 +511,19 @@ def run_full_pipeline():
                             articles = [{"title": f"{topic} articles", "published": "Unknown", "body": content}]
                         articles_by_topic[topic] = articles
                 
-                digest = generate_daily_digest(articles_by_topic)
+                digest = generate_daily_digest(articles_by_topic, api_key=api_key)
                 with open("output.txt", "w", encoding="utf-8") as f:
                     f.write(digest)
                 _update_step_status("summarizing", "idle", time.time() - start)
-                
+
                 # Step 3: Generate Insights
                 _update_step_status("insights", "running")
                 run_formatter("output.txt")
                 _update_step_status("insights", "idle", time.time() - start)
-                
+
                 # Step 4: Generate TLP
                 _update_step_status("tlp", "running")
-                run_tl_pipeline("output.txt")
+                run_tl_pipeline("output.txt", api_key=api_key)
                 _update_step_status("tlp", "idle", time.time() - start)
                 
                 logger.info(f"Full pipeline completed in {time.time() - start:.2f}s")

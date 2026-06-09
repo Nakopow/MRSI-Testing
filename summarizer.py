@@ -179,17 +179,27 @@ from src.config import (
     PROMPTS_PATH,
 )
 
-def init_gemini():
-    """Initialize the Gemini API client."""
+def init_gemini(api_key: str = None):
+    """Initialize the Gemini API client.
+
+    If api_key is provided it always wins and resets cached state, allowing
+    per-request key injection (user-supplied keys, cloud-stored keys on Vercel).
+    """
     global _gemini_initialized, _gemini_client, _gemini_api_keys, _gemini_key_index, _gemini_key_label
-    if _gemini_initialized:
-        return
-    
+
     with _gemini_lock:
-        # Double-check after acquiring lock
+        if api_key:
+            # Explicit key supplied — always reinitialize so the caller's key is used.
+            _gemini_api_keys = [api_key]
+            _gemini_key_index = 0
+            _gemini_key_label = "user-provided key 1/1"
+            _gemini_client = _make_genai_client(api_key)
+            _gemini_initialized = True
+            return
+
         if _gemini_initialized:
             return
-        
+
         _gemini_api_keys = _load_gemini_api_keys()
         if not _gemini_api_keys:
             raise ValueError(
@@ -351,7 +361,7 @@ def call_gemini_directly(prompt: str) -> str:
     raise RuntimeError(f"Gemini request failed after trying {attempts} key(s) (last: {label}): {last_exc}") from last_exc
 
 
-def generate_daily_digest(articles_by_topic: dict) -> str:
+def generate_daily_digest(articles_by_topic: dict, api_key: str = None) -> str:
     """
     Generate a complete daily digest combining all topics.
     
@@ -363,8 +373,8 @@ def generate_daily_digest(articles_by_topic: dict) -> str:
     Returns:
         Complete digest string ready for output
     """
-    init_gemini()
-    
+    init_gemini(api_key)
+
     # Get today's date
     today_date = datetime.now().strftime('%B %d, %Y')
     
