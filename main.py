@@ -1062,6 +1062,68 @@ def generate_dashboard_html(
     return output_path
 
 
+def _ensure_gemini_key() -> None:
+    """
+    Make sure GEMINI_API_KEY is available before the pipeline starts.
+
+    Resolution order:
+      1. Already in os.environ (system env var or previously loaded .env)
+      2. .env file in the project root
+      3. .api_keys.json in the project root (saved by the local web UI)
+      4. Interactive prompt — user types the key at the terminal
+    """
+    import os
+    from pathlib import Path as _Path
+
+    # 1. Already set
+    if os.environ.get("GEMINI_API_KEY", "").strip():
+        return
+
+    # 2. Try loading .env explicitly (dotenv may not have been called yet)
+    env_file = _Path(__file__).resolve().parent / ".env"
+    if env_file.exists():
+        try:
+            from dotenv import load_dotenv as _ld
+            _ld(env_file, override=False)
+            if os.environ.get("GEMINI_API_KEY", "").strip():
+                print(f"✅ Loaded GEMINI_API_KEY from {env_file}")
+                return
+        except Exception:
+            pass
+
+    # 3. Try .api_keys.json (written by the web UI in local-storage mode)
+    keys_file = _Path(__file__).resolve().parent / ".api_keys.json"
+    if keys_file.exists():
+        try:
+            import json as _json
+            data = _json.loads(keys_file.read_text(encoding="utf-8"))
+            key = data.get("keys", {}).get("GEMINI_API_KEY", "").strip()
+            if key:
+                os.environ["GEMINI_API_KEY"] = key
+                print("✅ Loaded GEMINI_API_KEY from .api_keys.json")
+                return
+        except Exception:
+            pass
+
+    # 4. Interactive prompt (terminal use)
+    print("\n⚠️  No Gemini API key found.")
+    print("    Options:")
+    print("      A) Add  GEMINI_API_KEY=your_key  to a .env file in this folder")
+    print("      B) Set  GEMINI_API_KEY=your_key  as an environment variable")
+    print("      C) Type your key below (used for this run only)\n")
+    try:
+        key = input("Enter Gemini API key (or press Enter to abort): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        key = ""
+
+    if key:
+        os.environ["GEMINI_API_KEY"] = key
+        print("✅ API key accepted for this run.")
+    else:
+        print("❌ No API key provided. Aborting.")
+        sys.exit(1)
+
+
 def main():
     """
     Main orchestration function for the complete pipeline.
@@ -1079,6 +1141,9 @@ def main():
         dashboard_path = generate_dashboard_html()
         print(f"Dashboard generated successfully -> {dashboard_path}")
         return
+
+    # ── Resolve Gemini API key before wasting time on scraping ───────────────
+    _ensure_gemini_key()
 
     print("Loading feeds from feeds.json...")
     try:
