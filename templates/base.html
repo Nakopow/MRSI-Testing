@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}MRSI Platform - by ExoAsia{% endblock %}</title>
+  <title>{% block title %}TLP Platform - by Exoasia{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
@@ -14,15 +14,15 @@
   <aside class="nav-sidebar">
     <div class="logo-area">
       <div class="logo-mark">
-        <div class="logo-icon">MR</div>
-        <div class="logo-text">MRSI Platform</div>
+        <div class="logo-icon">TLP</div>
+        <div class="logo-text">TLP Platform</div>
       </div>
-      <div class="logo-sub">By ExoAsia</div>
+      <div class="logo-sub">By Exoasia</div>
     </div>
 
     <div class="brand-switcher" onclick="toggleBrandSwitcher()" id="brandSwitcher">
       <div class="brand-av" id="currentBrandAv">EA</div>
-      <div class="brand-av-name" id="currentBrandName">ExoAsia Research</div>
+      <div class="brand-av-name" id="currentBrandName">Exoasia Research</div>
       <i class="ti ti-chevron-down"></i>
       
       <!-- Brand Dropdown Menu -->
@@ -30,16 +30,16 @@
         <div class="brand-dropdown-item active" data-brand="exoasia" onclick="switchBrand('exoasia')">
           <div class="brand-av-sm">EA</div>
           <div class="brand-info">
-            <div class="brand-label">ExoAsia Research</div>
+            <div class="brand-label">Exoasia Research</div>
             <div class="brand-desc">Primary brand</div>
           </div>
           <i class="ti ti-check"></i>
         </div>
-        <div class="brand-dropdown-item" data-brand="mrsi" onclick="switchBrand('mrsi')">
-          <div class="brand-av-sm">MR</div>
+        <div class="brand-dropdown-item" data-brand="tlp" onclick="switchBrand('tlp')">
+          <div class="brand-av-sm">TLP</div>
           <div class="brand-info">
-            <div class="brand-label">MRSI Platform</div>
-            <div class="brand-desc">Internal analytics</div>
+            <div class="brand-label">TLP Platform</div>
+            <div class="brand-desc">Thought leadership</div>
           </div>
         </div>
         <div class="brand-dropdown-divider"></div>
@@ -96,12 +96,18 @@
     </nav>
 
     <div class="nav-footer">
-      <div class="user-av">EA</div>
-      <div>
-        <div class="user-n">ExoAsia</div>
+      {% if session.get('avatar') %}
+        <img src="{{ session['avatar'] }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+      {% else %}
+        <div class="user-av">{{ (session.get('username') or 'EA')[:2] | upper }}</div>
+      {% endif %}
+      <div style="min-width:0;">
+        <div class="user-n" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ session.get('username', 'Exoasia') }}</div>
         <div class="user-r">Research Ops</div>
       </div>
-      <i class="ti ti-settings"></i>
+      <a href="{{ url_for('auth.logout') }}" title="Sign out" style="color:inherit;text-decoration:none;margin-left:auto;flex-shrink:0;">
+        <i class="ti ti-logout"></i>
+      </a>
     </div>
   </aside>
 

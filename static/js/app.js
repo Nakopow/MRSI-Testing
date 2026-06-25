@@ -686,7 +686,7 @@ function downloadTLPPiece(topic, platform) {
 function postNowTLP(topic, pieceIndex) {
   showToast('info', 'Posting...', `Posting ${topic} content to platform`);
   
-  fetch('/dashboard/tlp/post', {
+  fetch('/tlp/post', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ topic, pieceIndex }),
@@ -758,7 +758,7 @@ function saveEditedTLP() {
   
   showToast('info', 'Saving changes...', 'Please wait.');
   
-  fetch('/dashboard/tlp/save', {
+  fetch('/tlp/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -806,7 +806,7 @@ function saveAutopostSettings() {
 
   showToast('info', 'Saving autopost settings...', 'Please wait.');
 
-  fetch('/dashboard/autopost/save', {
+  fetch('/autopost/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ settings }),
@@ -840,22 +840,29 @@ function selectPipelineSlot(el) {
  * Save schedule settings
  */
 function saveScheduleSettings() {
-  // Collect selected time slots
-  const pipelineSlots = document.querySelectorAll('.panel:first-child .time-slot');
-  const postingSlots = document.querySelectorAll('.panel:last-child .time-slot');
-  
-  const schedule = {
-    pipeline: [],
-    posting: []
-  };
+  const postingSlots = document.querySelectorAll('#page-schedule .panel:last-of-type .time-slot');
+  const activeSlot = document.querySelector('#pipeline-slot-group .time-slot.on');
 
-  pipelineSlots.forEach(slot => {
-    const label = slot.querySelector('.ts-l')?.textContent || '';
-    const time = slot.querySelector('.ts-t')?.textContent || '';
-    if (slot.classList.contains('on')) {
-      schedule.pipeline.push({ label, time, enabled: true });
+  const schedule = { pipeline: [], posting: [] };
+
+  // Build pipeline entry from the active slot + custom time picker
+  if (activeSlot) {
+    const sched = activeSlot.dataset.sched;
+    const label = activeSlot.querySelector('.ts-l')?.textContent || '';
+    let time = 'On-demand';
+    if (sched !== 'manual') {
+      const hour = document.getElementById('sched-hour')?.value || '6';
+      const min = document.getElementById('sched-minute')?.value || '00';
+      const ampm = document.getElementById('sched-ampm')?.value || 'AM';
+      if (sched === 'weekly') {
+        const day = document.getElementById('sched-day')?.value || 'Mon';
+        time = `${day} ${hour}:${min} ${ampm}`;
+      } else {
+        time = `${hour}:${min} ${ampm} PHT`;
+      }
     }
-  });
+    schedule.pipeline.push({ label, time, enabled: sched !== 'manual' });
+  }
 
   postingSlots.forEach(slot => {
     const platform = slot.querySelector('.ts-l')?.textContent || '';
@@ -867,7 +874,7 @@ function saveScheduleSettings() {
 
   showToast('info', 'Saving schedule...', 'Please wait.');
 
-  fetch('/dashboard/schedule/save', {
+  fetch('/schedule/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ schedule }),
@@ -875,15 +882,14 @@ function saveScheduleSettings() {
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        showToast('success', 'Schedule saved!', 'Changes will take effect on next pipeline run.');
+        showToast('success', 'Schedule saved!', 'Changes applied to the pipeline scheduler.');
       } else {
         showToast('error', 'Failed to save schedule', data.error || 'Please try again.');
       }
     })
     .catch(error => {
       console.error('Error saving schedule:', error);
-      // For demo purposes, show success even if endpoint doesn't exist
-      showToast('success', 'Schedule saved!', 'Changes will take effect on next pipeline run.');
+      showToast('error', 'Failed to save schedule', 'Check your connection and try again.');
     });
 }
 
@@ -905,7 +911,7 @@ function saveBrandSettings() {
 
   showToast('info', 'Saving brand settings...', 'Please wait.');
 
-  fetch('/dashboard/settings/save', {
+  fetch('/settings/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ settings }),
@@ -995,7 +1001,7 @@ function addNewTopic() {
 
   showToast('info', 'Adding topic...', 'Please wait.');
 
-  fetch('/dashboard/topics/add', {
+  fetch('/topics/add', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1153,7 +1159,7 @@ function switchBrand(brandKey) {
   document.getElementById('brandDropdown').style.display = 'none';
   
   // Save preference
-  fetch('/dashboard/brand/switch', {
+  fetch('/brand/switch', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ brand: brandKey }),

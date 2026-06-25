@@ -11,11 +11,62 @@
     <div class="panel-header">
       <i class="ti ti-cpu panel-icon-purple"></i>
       <div class="panel-title">Pipeline Run Schedule</div>
+      <span id="next-run-label" style="margin-left:auto;font-size:12px;color:var(--muted);"></span>
     </div>
     <div class="time-grid" id="pipeline-slot-group">
-      <div class="time-slot on" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-clock"></i><div><div class="ts-l">Daily Run</div><div class="ts-t">6:00 AM PHT</div></div></div>
-      <div class="time-slot" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-calendar"></i><div><div class="ts-l">Weekly Only</div><div class="ts-t">Mon 6:00 AM</div></div></div>
-      <div class="time-slot" style="cursor:pointer" onclick="selectPipelineSlot(this)"><i class="ti ti-player-play"></i><div><div class="ts-l">Manual Only</div><div class="ts-t">On-demand</div></div></div>
+      <div class="time-slot on" style="cursor:pointer" data-sched="daily" onclick="selectPipelineSlot(this)">
+        <i class="ti ti-clock"></i>
+        <div><div class="ts-l">Daily Run</div><div class="ts-t" id="slot-daily-label">6:00 AM PHT</div></div>
+      </div>
+      <div class="time-slot" style="cursor:pointer" data-sched="weekly" onclick="selectPipelineSlot(this)">
+        <i class="ti ti-calendar"></i>
+        <div><div class="ts-l">Weekly Only</div><div class="ts-t" id="slot-weekly-label">Mon 6:00 AM</div></div>
+      </div>
+      <div class="time-slot" style="cursor:pointer" data-sched="manual" onclick="selectPipelineSlot(this)">
+        <i class="ti ti-player-play"></i>
+        <div><div class="ts-l">Manual Only</div><div class="ts-t">On-demand</div></div>
+      </div>
+    </div>
+
+    <!-- Custom time picker (hidden when Manual is selected) -->
+    <div id="schedule-time-picker" style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div id="weekday-picker" style="display:none;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Day of Week</label>
+        <select id="sched-day" class="form-input" style="width:140px;">
+          <option value="Mon">Monday</option>
+          <option value="Tue">Tuesday</option>
+          <option value="Wed">Wednesday</option>
+          <option value="Thu">Thursday</option>
+          <option value="Fri">Friday</option>
+          <option value="Sat">Saturday</option>
+          <option value="Sun">Sunday</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Time (PHT)</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <select id="sched-hour" class="form-input" style="width:80px;">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6" selected>6</option>
+            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          </select>
+          <span style="color:var(--muted);">:</span>
+          <select id="sched-minute" class="form-input" style="width:80px;">
+            <option value="00" selected>00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+          <select id="sched-ampm" class="form-input" style="width:80px;">
+            <option value="AM" selected>AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding-top:18px;">
+        <span id="schedule-preview" style="font-size:13px;color:var(--purple);font-weight:500;"></span>
+      </div>
     </div>
   </section>
 
@@ -37,3 +88,105 @@
     </div>
   </section>
 </section>
+
+<script>
+(function () {
+  function updateSlotLabel() {
+    const hour = document.getElementById('sched-hour').value;
+    const min = document.getElementById('sched-minute').value;
+    const ampm = document.getElementById('sched-ampm').value;
+    const active = document.querySelector('#pipeline-slot-group .time-slot.on');
+    if (!active) return;
+    const sched = active.dataset.sched;
+    let label = '';
+    if (sched === 'weekly') {
+      const day = document.getElementById('sched-day').value;
+      label = `${day} ${hour}:${min} ${ampm}`;
+      document.getElementById('slot-weekly-label').textContent = label + ' PHT';
+    } else if (sched === 'daily') {
+      label = `${hour}:${min} ${ampm} PHT`;
+      document.getElementById('slot-daily-label').textContent = label;
+    }
+    document.getElementById('schedule-preview').textContent = label ? '→ ' + label : '';
+  }
+
+  ['sched-hour', 'sched-minute', 'sched-ampm', 'sched-day'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateSlotLabel);
+  });
+
+  // Extend selectPipelineSlot to show/hide weekday picker and time picker
+  const origSelectPipelineSlot = window.selectPipelineSlot;
+  window.selectPipelineSlot = function(el) {
+    if (origSelectPipelineSlot) origSelectPipelineSlot(el);
+    else {
+      const group = document.getElementById('pipeline-slot-group');
+      if (group) group.querySelectorAll('.time-slot').forEach(s => s.classList.remove('on'));
+      el.classList.add('on');
+    }
+    const sched = el.dataset.sched;
+    const picker = document.getElementById('schedule-time-picker');
+    const weekdayPicker = document.getElementById('weekday-picker');
+    if (sched === 'manual') {
+      picker.style.display = 'none';
+    } else {
+      picker.style.display = 'flex';
+      weekdayPicker.style.display = sched === 'weekly' ? '' : 'none';
+    }
+    updateSlotLabel();
+  };
+
+  // Load saved schedule on page load
+  fetch('/schedule/config')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data || !data.schedule) return;
+      const pipeline = (data.schedule.pipeline || [])[0];
+      if (!pipeline || !pipeline.enabled) return;
+      const label = pipeline.label || '';
+      const time = pipeline.time || '';
+      const group = document.getElementById('pipeline-slot-group');
+      if (!group) return;
+
+      // Pick the right slot
+      let targetSched = 'manual';
+      if (label.includes('Daily')) targetSched = 'daily';
+      else if (label.includes('Weekly')) targetSched = 'weekly';
+      group.querySelectorAll('.time-slot').forEach(s => s.classList.remove('on'));
+      const slot = group.querySelector(`[data-sched="${targetSched}"]`);
+      if (slot) slot.classList.add('on');
+
+      // Parse time from saved slot: "6:00 AM PHT" or "Mon 6:00 AM"
+      const parts = time.replace(' PHT', '').trim().split(' ');
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      let dayPart = null, timePart = null, ampmPart = 'AM';
+      if (days.includes(parts[0])) {
+        dayPart = parts[0]; timePart = parts[1]; ampmPart = parts[2] || 'AM';
+      } else {
+        timePart = parts[0]; ampmPart = parts[1] || 'AM';
+      }
+      if (timePart && timePart.includes(':')) {
+        const [h, m] = timePart.split(':');
+        const hourSel = document.getElementById('sched-hour');
+        const minSel = document.getElementById('sched-minute');
+        const ampmSel = document.getElementById('sched-ampm');
+        if (hourSel) hourSel.value = parseInt(h, 10).toString();
+        if (minSel) { const mStr = m.padStart(2,'0'); if ([...minSel.options].some(o=>o.value===mStr)) minSel.value = mStr; }
+        if (ampmSel) ampmSel.value = ampmPart;
+      }
+      if (dayPart) {
+        const daySel = document.getElementById('sched-day');
+        if (daySel) daySel.value = dayPart;
+      }
+
+      const picker = document.getElementById('schedule-time-picker');
+      const weekdayPicker = document.getElementById('weekday-picker');
+      if (targetSched === 'manual') { picker.style.display = 'none'; }
+      else { picker.style.display = 'flex'; weekdayPicker.style.display = targetSched === 'weekly' ? '' : 'none'; }
+      updateSlotLabel();
+    })
+    .catch(() => {});
+
+  updateSlotLabel();
+})();
+</script>

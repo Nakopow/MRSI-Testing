@@ -19,9 +19,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 
 tlp_insights_bp = Blueprint("tlp_insights", __name__)
+
+
+@tlp_insights_bp.before_request
+def _require_login():
+    if not session.get("logged_in"):
+        return redirect(url_for("auth.login_page", next=request.path))
 
 TOPIC_LABELS: dict[str, str] = {
     "ai": "Artificial Intelligence",

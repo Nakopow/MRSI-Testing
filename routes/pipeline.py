@@ -4,7 +4,7 @@ import threading
 import logging
 from datetime import datetime
 from pathlib import Path
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, redirect, request, session, url_for
 
 # Import pipeline components
 from scraper_main import main as run_scraping
@@ -14,6 +14,12 @@ from src.storage import storage
 
 pipeline_bp = Blueprint("pipeline", __name__)
 logger = logging.getLogger(__name__)
+
+
+@pipeline_bp.before_request
+def _require_login():
+    if not session.get("logged_in"):
+        return redirect(url_for("auth.login_page", next=request.path))
 
 
 def _resolve_api_key(request_data: dict = None) -> str:

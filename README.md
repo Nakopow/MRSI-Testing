@@ -1,470 +1,325 @@
-# Market Research and Strategic Insight
+# TLP Platform — by Exoasia
 
-An automated market intelligence pipeline that scrapes RSS feeds, extracts article text, generates Gemini-based topic briefings, builds branded Daily Insight Word documents, and produces a separate Thought Leadership Pipeline (TLP) content pack for AI, Cybersecurity, and Web3.
+An automated Thought Leadership Pipeline that scrapes RSS feeds, generates Gemini-powered daily briefings, produces branded Daily Insight and TLP documents, and serves everything through a multi-user web dashboard with Google OAuth and per-user preferences.
 
-## What the program does
+---
 
-This repo has three connected workflows:
+## What it does
 
-1. `scraper_main.py`
-   Collects recent articles from configured RSS feeds, filters them by topic keywords, extracts article body text, and writes topic article files.
+Three connected workflows feed into the web dashboard:
 
-2. `main.py`
-   Runs the full daily intelligence workflow:
-   - scrape RSS feeds
-   - enrich articles with body text
-   - generate topic summaries with Gemini
-   - assemble `output.txt`
-   - export `Daily_Tech_Briefing.docx`
-   - build branded Daily Insight `.docx` files in `insights/`
-   - run the Thought Leadership Pipeline
+| Step | Script | Output |
+|------|--------|--------|
+| Scrape | `scraper_main.py` | `*_articles.txt` per topic |
+| Summarise | `summarizer.py` | `*_summary.txt`, `output.txt`, `Daily_Tech_Briefing.docx` |
+| Daily Insights | `formatter.py` | `insights/*.docx` |
+| TLP generation | `tl_summarizer.py` + `tl_formatter.py` | `tl_output_*.json`, `TLPs/*.docx` |
+| Web dashboard | `app.py` (Flask) | Live UI, per-user settings, scheduling |
 
-3. Thought Leadership Pipeline
-   Uses the finished daily digest in `output.txt` to generate multi-platform thought leadership content per topic, plus branded TLP `.docx` files in `TLPs/`.
+Topics covered: **AI**, **Cybersecurity**, **Web3** (custom topics can be added in the dashboard).
 
-## End-to-end pipeline
+---
 
-```text
-feeds.json
-  -> scraper.py
-  -> article filtering by topic/date/keywords
-  -> article body extraction + robots.txt check + URL cache
-  -> ai_articles.txt / cybersecurity_articles.txt / web3_articles.txt
-  -> summarizer.py
-  -> ai_summary.txt / cybersecurity_summary.txt / web3_summary.txt
-  -> output.txt
-  -> Daily_Tech_Briefing.docx
-  -> formatter.py
-  -> insights/*.docx
-  -> tl_summarizer.py
-  -> tl_output_ai.json / tl_output_cybersecurity.json / tl_output_web3.json
-  -> tl_formatter.py
-  -> TLPs/*.docx
-```
-
-## Project structure
-
-```text
-main.py                  Full pipeline orchestrator
-scraper_main.py          Scraping-only entry point
-scraper.py               RSS fetching, filtering, extraction, caching
-summarizer.py            Gemini daily digest generation
-formatter.py             Builds Daily Insight .docx files from output.txt
-tl_summarizer.py         Builds TLP JSON content packs and generates images
-tl_formatter.py          Builds branded TLP .docx files from TLP JSON
-src/config.py            Centralized config
-src/utils.py             Shared utilities
-feeds.json               RSS sources by topic
-prompts_config.json      Daily digest prompts
-tl_prompts_config.json   Thought Leadership prompts
-tests/                   Unit tests
-insights/                Generated Daily Insight files
-TLPs/                    Generated Thought Leadership files
-```
-
-## Topics covered
-
-- `ai`
-- `cybersecurity`
-- `web3`
-
-These are the canonical topic keys used across scraping, summarization, filenames, and output generation.
-
-## Main features
-
-- Multi-topic RSS aggregation from `feeds.json`
-- Keyword-based topic filtering using `src/config.py`
-- 24-hour article lookback window
-- Full-text article extraction with Beautiful Soup
-- `robots.txt` checks before article fetches
-- Retry-enabled HTTP session for scraping
-- URL cache persisted in `.url_cache.json`
-- Gemini daily digest generation with API key rotation support
-- Per-topic summary files plus unified `output.txt`
-- Word export for daily briefing
-- Daily Insight `.docx` generation from the digest
-- Thought Leadership Pipeline for multi-platform content packs
-- Image generation support for TLP outputs using Hugging Face or Gemini
-
-## Requirements
-
-- Python 3.8+
-- A Gemini API key in `GEMINI_API_KEY`
-- Internet access when running the scraper and Gemini/TLP steps
-- Required Word templates present in the repo root:
-  - `Exoasia_MRSI_DailyInsight_Mar9_AI.docx`
-  - `Exoasia_MRSI_ThoughtLeadership_Template.docx`
-
-## Installation
+## Quick start
 
 ```bash
+# 1. Clone and create a virtual environment
 python -m venv .venv
-```
 
-Windows:
-
-```bash
+# Windows
 .\.venv\Scripts\activate
-```
-
-macOS/Linux:
-
-```bash
+# macOS / Linux
 source .venv/bin/activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Copy and fill in the environment file
+cp .env.example .env
+# edit .env — at minimum set GEMINI_API_KEY and DASHBOARD_PASSWORD
+
+# 4. Start the web server
+python app.py
+# → http://localhost:8000
 ```
 
-Install dependencies:
+---
 
-```bash
-pip install -r requirement.txt
+## Web dashboard
+
+The Flask app (`app.py`) exposes the full platform UI.
+
+### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard overview (metrics, recent activity) |
+| `/v2/insights` | Daily Insight documents per topic |
+| `/v2/tlp` | TLP & Newsletter content packs |
+| `/autopost` | Auto-post schedule and platform guidance |
+| `/schedule` | Pipeline run schedule (daily / weekly / manual) |
+| `/apikeys` | API key management |
+| `/settings` | Brand settings |
+| `/login` | Sign in (username/password or Google) |
+| `/register` | Create account |
+| `/logout` | Sign out |
+
+### Pipeline controls
+
+The **Pipeline** button in the top bar lets you run any step individually or the full pipeline end-to-end, with live status polling.
+
+---
+
+## Authentication
+
+### Username / password
+
+Set in `.env`:
+
+```env
+DASHBOARD_USERNAME=admin
+DASHBOARD_PASSWORD=your_password
 ```
 
-Or:
+### Google OAuth (recommended)
 
-```bash
-pip install -e .
+1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add Authorised redirect URIs:
+   - `http://localhost:8000/auth/google/callback` (local)
+   - `https://your-domain.com/auth/google/callback` (production)
+4. Add to `.env`:
+
+```env
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+ALLOWED_GMAIL=you@gmail.com  # comma-separated; blank = any Google account
 ```
+
+### User accounts
+
+Every user (registered or Google sign-in) gets their own row in the database. Per-user settings stored in the `users` table:
+
+- Pipeline schedule
+- Brand settings
+- Auto-post preferences
+- API keys (Gemini, OpenAI, Mailchimp)
+
+---
 
 ## Environment variables
 
-Create a `.env` file in the project root.
+Copy `.env.example` to `.env` and fill in the values below.
 
 ### Required
 
 ```env
-GEMINI_API_KEY=your_gemini_key
+GEMINI_API_KEY=your_gemini_key      # https://aistudio.google.com/apikey
+DASHBOARD_PASSWORD=change_me_now
+SECRET_KEY=<random 32-byte hex>     # python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-`summarizer.py` and `tl_summarizer.py` both support multiple Gemini keys. You can either:
-
-- provide a comma-separated value:
+### Authentication (optional but recommended)
 
 ```env
-GEMINI_API_KEY=key1,key2,key3
+DASHBOARD_USERNAME=admin            # default: admin
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+ALLOWED_GMAIL=you@gmail.com
 ```
 
-- or repeat the key on multiple lines in `.env`:
+### Database
 
 ```env
-GEMINI_API_KEY=key1
-GEMINI_API_KEY=key2
-GEMINI_API_KEY=key3
+# Default: SQLite file (users.db) — no setup needed for local dev
+# For production set DATABASE_URL to your Supabase / PostgreSQL connection string:
+DATABASE_URL=postgresql://postgres.[ref]:[password]@[host]:6543/postgres
 ```
 
-### Optional TLP image settings
+### Cloud storage (Supabase)
 
 ```env
-HF_API_TOKEN=your_huggingface_token
-IMAGE_BACKEND=huggingface
+STORAGE_BACKEND=supabase            # auto | supabase | s3 | local
+SUPABASE_URL=https://[ref].supabase.co
+SUPABASE_KEY=your_service_role_key
+SUPABASE_BUCKET=tlp-artifacts
+```
+
+### AI image generation (optional)
+
+```env
+IMAGE_BACKEND=huggingface           # huggingface | gemini | none
+HF_API_TOKEN=
 HF_IMAGE_MODEL=runwayml/stable-diffusion-v1-5
 GEMINI_IMAGE_MODEL=imagen-4.0-fast-generate-001
-IMAGE_STYLE_PRESET=bold
+IMAGE_STYLE_PRESET=bold             # bold | cinematic | minimal | neon | corporate
 TL_NO_IMAGES=false
 ```
 
-Supported `IMAGE_BACKEND` values:
+### Scraper tuning (optional)
 
-- `huggingface`
-- `gemini`
-- `none`
+```env
+ARTICLE_HOURS_LOOKBACK=24
+MAX_ENTRIES_PER_FEED=20
+REQUEST_DELAY_SECONDS=0.5
+REQUEST_TIMEOUT_SECONDS=10
+MAX_ARTICLE_WORDS=1500
+MIN_KEYWORD_MATCHES=2
+GEMINI_MODEL=gemini-2.5-flash
+```
 
-Supported `IMAGE_STYLE_PRESET` values in `tl_summarizer.py`:
+---
 
-- `bold`
-- `cinematic`
-- `minimal`
-- `neon`
-- `corporate`
+## Project structure
 
-## Configuration
+```
+app.py                   Flask app factory — DB init, blueprint registration, scheduler
+models.py                SQLAlchemy User model with per-user preferences JSON
+routes/
+  auth.py                Login, registration, Google OAuth callback
+  dashboard.py           Dashboard pages and settings API (per-user)
+  pipeline.py            Pipeline step endpoints (scrape, summarise, insights, TLP)
+  tlp_insights.py        TLP & Insights page endpoints + generation trigger
+  api.py                 Status API
+src/
+  config.py              Centralised runtime config
+  scheduler.py           APScheduler integration (Railway / long-running only)
+  storage.py             Storage backend abstraction (local / Supabase / S3)
+  utils.py               Shared utilities
+static/
+  css/main.css           Design system
+  js/app.js              Dashboard interactivity, pipeline polling, schedule UI
+templates/
+  base.html              Sidebar nav, topbar, pipeline menu
+  auth/
+    login.html           Sign-in page (Google button + password form)
+    register.html        Registration page with password strength meter
+  dashboard/
+    _dashboard_page.html Overview metrics and recent activity
+    _insights_page.html  Daily Insight file list
+    _tlp_page.html       TLP content cards
+    _schedule_page.html  Pipeline schedule picker with custom time inputs
+    _apikeys_page.html   API key management
+    _settings_page.html  Brand settings
+  v2/
+    tlp.html             Enhanced TLP view
+    insights.html        Enhanced Insights view
+main.py                  Full pipeline orchestrator (CLI)
+scraper_main.py          Scraping-only entry point
+scraper.py               RSS fetch, filter, body extraction, URL cache
+summarizer.py            Gemini daily digest generation + key rotation
+formatter.py             Daily Insight .docx builder
+tl_summarizer.py         TLP content generation (Gemini) + image generation
+tl_formatter.py          Branded TLP .docx builder
+feeds.json               RSS sources by topic
+prompts_config.json      Daily digest prompts
+tl_prompts_config.json   TLP prompts
+tests/                   Unit tests
+insights/                Generated Daily Insight .docx files
+TLPs/                    Generated TLP .docx files
+```
 
-Most runtime settings live in [src/config.py](/C:/Users/Owner/Documents/GitHub/Market-Research-and-Strategic-Insight/src/config.py).
+---
 
-### Core scraper settings
+## Pipeline flow
 
-| Setting | Default |
-|---|---:|
-| `ARTICLE_HOURS_LOOKBACK` | `24` |
-| `MAX_ENTRIES_PER_FEED` | `20` |
-| `REQUEST_DELAY_SECONDS` | `0.5` |
-| `REQUEST_TIMEOUT_SECONDS` | `10` |
-| `MAX_ARTICLE_WORDS` | `1500` |
-| `MIN_KEYWORD_MATCHES` | `2` |
-| `GEMINI_MODEL` | `gemini-2.5-flash` |
+```
+feeds.json
+  → scraper.py           RSS fetch + keyword filter + body extraction
+  → *_articles.txt
+  → summarizer.py        Gemini topic summaries + unified digest
+  → *_summary.txt / output.txt / Daily_Tech_Briefing.docx
+  → formatter.py         Per-topic branded .docx
+  → insights/*.docx
+  → tl_summarizer.py     Structured TLP JSON via Gemini + optional images
+  → tl_output_*.json
+  → tl_formatter.py      Branded TLP .docx
+  → TLPs/*.docx
+```
 
-### Files and prompts
+---
 
-- `feeds.json` contains the RSS sources grouped by topic
-- `prompts_config.json` controls the daily digest prompts
-- `tl_prompts_config.json` controls the Thought Leadership content prompts
-
-### Output filenames
-
-Configured in `src/config.py`:
-
-- `ai_articles.txt`
-- `cybersecurity_articles.txt`
-- `web3_articles.txt`
-- `ai_summary.txt`
-- `cybersecurity_summary.txt`
-- `web3_summary.txt`
-- `output.txt`
-
-## Usage
-
-### 1. Run scraping only
+## Running the pipeline from the CLI
 
 ```bash
+# Scrape only
 python scraper_main.py
-```
 
-Generates:
-
-- `ai_articles.txt`
-- `cybersecurity_articles.txt`
-- `web3_articles.txt`
-
-### 2. Run the full daily pipeline
-
-```bash
+# Full pipeline (scrape → digest → insights → TLP)
 python main.py
-```
 
-Generates:
-
-- `ai_summary.txt`
-- `cybersecurity_summary.txt`
-- `web3_summary.txt`
-- `output.txt`
-- `Daily_Tech_Briefing.docx`
-- `insights/Exoasia_MRSI_DailyInsight_<Date>_<Topic>.docx`
-- `tl_output_ai.json`
-- `tl_output_cybersecurity.json`
-- `tl_output_web3.json`
-- `TLPs/Exoasia_MRSI_ThoughtLeadership_<Date>_<Topic>.docx`
-
-### 3. Run the Daily Insight formatter directly
-
-```bash
+# Daily Insight formatter only
 python formatter.py --input output.txt --outdir insights
-```
 
-### 4. Run the Thought Leadership summarizer directly
-
-```bash
+# TLP summariser only
 python tl_summarizer.py
-```
-
-Useful flags:
-
-```bash
 python tl_summarizer.py --style bold --image-backend huggingface
 python tl_summarizer.py --no-images
-python tl_summarizer.py --dated-filenames
-```
 
-### 5. Run the Thought Leadership formatter directly
-
-```bash
+# TLP formatter only
 python tl_formatter.py --outdir TLPs
 ```
 
-## Thought Leadership Pipeline
+---
 
-The TLP starts after `main.py` finishes building `output.txt`.
+## Deployment
 
-### TLP step 1: `tl_summarizer.py`
+### Local
 
-For each topic:
+```bash
+python app.py
+```
 
-- reads the topic section from `output.txt`
-- loads the matching prompt from `tl_prompts_config.json`
-- calls Gemini to create a structured content pack
-- parses the response into platform-specific pieces
-- optionally generates one image per piece
-- saves the result to `tl_output_<topic>.json`
+### Vercel (serverless)
 
-Each topic produces five platform content pieces:
+- Set all env vars in the Vercel dashboard
+- `STORAGE_BACKEND=supabase` — Vercel has no persistent filesystem
+- `DATABASE_URL` → Supabase **Transaction pooler** connection string (port 6543)
+- `VERCEL=1` is set automatically; the app disables APScheduler and uses `NullPool`
 
-- LinkedIn
-- YouTube / Video Script
-- Instagram Carousel
-- Facebook
-- TikTok
+### Railway
 
-The generated JSON includes:
+- `DATABASE_URL` → Supabase **Direct connection** string (port 5432) or Railway's own PostgreSQL
+- APScheduler runs as a background thread; the pipeline schedule set in the dashboard is respected
 
-- editorial note
-- piece number
-- platform
-- angle
-- format
-- objective
-- image guidance
-- copy, script, slides, or caption depending on platform
-- posting notes or production notes
-- optional base64-encoded image bytes
+---
 
-### TLP step 2: `tl_formatter.py`
+## Database
 
-This step:
+SQLite (`users.db`) is used by default — no configuration needed for local development.
 
-- reads each `tl_output_*.json`
-- injects content into the branded TLP Word template
-- embeds generated images or placeholders
-- writes final `.docx` files into `TLPs/`
+For production, set `DATABASE_URL` to any PostgreSQL connection string. Supabase is the recommended option:
 
-## Daily Insight formatter
+1. Supabase dashboard → **Settings → Database → Connection string → URI**
+2. Copy the **Transaction pooler** URI for Vercel, or **Direct connection** for Railway
+3. Set `DATABASE_URL` in your environment
 
-`formatter.py` reads `output.txt`, splits it into topic sections, parses:
+`db.create_all()` runs on app startup — the `users` table is created automatically.
 
-- title
-- subtitle
-- executive summary bullets
-- body sections
-- thought leadership questions
-- sources
-
-It then writes one branded `.docx` per topic into `insights/`.
-
-## Output reference
-
-### Scraper outputs
-
-- `ai_articles.txt`
-- `cybersecurity_articles.txt`
-- `web3_articles.txt`
-
-### Daily digest outputs
-
-- `ai_summary.txt`
-- `cybersecurity_summary.txt`
-- `web3_summary.txt`
-- `output.txt`
-- `Daily_Tech_Briefing.docx`
-
-### Daily Insight outputs
-
-- `insights/Exoasia_MRSI_DailyInsight_<Date>_AI.docx`
-- `insights/Exoasia_MRSI_DailyInsight_<Date>_CyberSec.docx`
-- `insights/Exoasia_MRSI_DailyInsight_<Date>_Web3.docx`
-
-### Thought Leadership outputs
-
-- `tl_output_ai.json`
-- `tl_output_cybersecurity.json`
-- `tl_output_web3.json`
-- `TLPs/Exoasia_MRSI_ThoughtLeadership_<Date>_AI.docx`
-- `TLPs/Exoasia_MRSI_ThoughtLeadership_<Date>_CyberSec.docx`
-- `TLPs/Exoasia_MRSI_ThoughtLeadership_<Date>_Web3.docx`
-
-### Cache output
-
-- `.url_cache.json`
-
-## Key modules
-
-### `scraper.py`
-
-Responsible for:
-
-- `fetch_rss_items()`
-- `extract_article_body()`
-- `enrich_articles()`
-- `can_fetch()`
-- `load_url_cache()`
-- `save_url_cache()`
-
-### `summarizer.py`
-
-Responsible for:
-
-- Gemini client initialization
-- API key loading and key rotation
-- per-topic summary generation
-- unified digest generation
-
-### `formatter.py`
-
-Responsible for:
-
-- parsing `output.txt`
-- splitting digest sections by topic
-- producing branded Daily Insight `.docx` files
-
-### `tl_summarizer.py`
-
-Responsible for:
-
-- extracting each topic briefing from `output.txt`
-- calling Gemini for structured TLP content
-- parsing TLP content into JSON
-- generating platform images
-- writing `tl_output_*.json`
-
-### `tl_formatter.py`
-
-Responsible for:
-
-- reading TLP JSON
-- patching the branded template
-- embedding generated images
-- writing final TLP `.docx` files
+---
 
 ## Testing
-
-Run tests with:
 
 ```bash
 pytest
 ```
 
-Current test files:
+Test files: `tests/test_config.py`, `tests/test_scraper.py`, `tests/test_utils.py`
 
-- `tests/test_config.py`
-- `tests/test_scraper.py`
-- `tests/test_utils.py`
+---
 
 ## Troubleshooting
 
-### `GEMINI_API_KEY` not set
+**`GEMINI_API_KEY` not set** — Add it to `.env` or export it before running.
 
-Add it to `.env` or export it before running the pipeline.
+**No articles found** — Check `feeds.json`, RSS source availability, `TOPIC_KEYWORDS`, `ARTICLE_HOURS_LOOKBACK`, and `MIN_KEYWORD_MATCHES`.
 
-### No articles found
+**Google sign-in fails** — Confirm the redirect URI in Google Cloud Console exactly matches `http(s)://your-domain/auth/google/callback`. On localhost use port 8000.
 
-Check:
+**Database connection error (Supabase)** — Make sure `DATABASE_URL` uses `postgresql://` (not `postgres://`), and that the password doesn't contain unescaped special characters. SSL is added automatically.
 
-- `feeds.json`
-- RSS source availability
-- `TOPIC_KEYWORDS`
-- `ARTICLE_HOURS_LOOKBACK`
-- `MIN_KEYWORD_MATCHES`
+**TLP images missing** — Check `IMAGE_BACKEND`, `HF_API_TOKEN` (Hugging Face), or Gemini image model availability. The TLP formatter falls back to placeholders if image generation fails.
 
-### Template not found
-
-The following files must exist in the repo root:
-
-- `Exoasia_MRSI_DailyInsight_Mar9_AI.docx`
-- `Exoasia_MRSI_ThoughtLeadership_Template.docx`
-
-### TLP images are missing
-
-Check:
-
-- `IMAGE_BACKEND`
-- `HF_API_TOKEN` if using Hugging Face
-- Gemini image model availability if using Gemini
-- `--no-images` or `TL_NO_IMAGES`
-
-If image generation fails, the TLP formatter can still build the final `.docx` using placeholders.
-
-### Robots.txt blocks an article
-
-That source will be skipped for body extraction. The pipeline falls back to cached content or the RSS summary when available.
-
-## Notes
-
-- `main.py` always runs the Daily Insight formatter and the Thought Leadership Pipeline after the digest is created.
-- `scraper_main.py` is the lightweight option if you only want article collection.
-- The repo currently includes generated sample outputs in `insights/`, `TLPs/`, and `tl_output_*.json`.
+**Template not found** — The following files must exist in the repo root:
+- `Exoasia_TLP_DailyInsight_Template.docx`
+- `Exoasia_TLP_ThoughtLeadership_Template.docx`
