@@ -1,12 +1,10 @@
 # TLP Platform — by Exoasia
 
-An automated Thought Leadership Pipeline that scrapes RSS feeds, generates Gemini-powered daily briefings, produces branded Daily Insight and TLP documents, and serves everything through a multi-user web dashboard with Google OAuth and per-user preferences.
+An automated Thought Leadership Pipeline that scrapes RSS feeds, generates Gemini-powered daily briefings, produces branded Daily Insight and TLP documents, and serves everything through a web dashboard with live pipeline controls and scheduling.
 
 ---
 
 ## What it does
-
-Three connected workflows feed into the web dashboard:
 
 | Step | Script | Output |
 |------|--------|--------|
@@ -14,7 +12,7 @@ Three connected workflows feed into the web dashboard:
 | Summarise | `summarizer.py` | `*_summary.txt`, `output.txt`, `Daily_Tech_Briefing.docx` |
 | Daily Insights | `formatter.py` | `insights/*.docx` |
 | TLP generation | `tl_summarizer.py` + `tl_formatter.py` | `tl_output_*.json`, `TLPs/*.docx` |
-| Web dashboard | `app.py` (Flask) | Live UI, per-user settings, scheduling |
+| Web dashboard | `app.py` (Flask) | Live UI, settings, scheduling |
 
 Topics covered: **AI**, **Cybersecurity**, **Web3** (custom topics can be added in the dashboard).
 
@@ -36,7 +34,7 @@ pip install -r requirements.txt
 
 # 3. Copy and fill in the environment file
 cp .env.example .env
-# edit .env — at minimum set GEMINI_API_KEY and DASHBOARD_PASSWORD
+# edit .env — at minimum set GEMINI_API_KEY
 
 # 4. Start the web server
 python app.py
@@ -60,80 +58,21 @@ The Flask app (`app.py`) exposes the full platform UI.
 | `/schedule` | Pipeline run schedule (daily / weekly / manual) |
 | `/apikeys` | API key management |
 | `/settings` | Brand settings |
-| `/login` | Sign in (username/password or Google) |
-| `/register` | Create account |
-| `/logout` | Sign out |
 
 ### Pipeline controls
 
-The **Pipeline** button in the top bar lets you run any step individually or the full pipeline end-to-end, with live status polling.
-
----
-
-## Authentication
-
-### Username / password
-
-Set in `.env`:
-
-```env
-DASHBOARD_USERNAME=admin
-DASHBOARD_PASSWORD=your_password
-```
-
-### Google OAuth (recommended)
-
-1. Go to [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
-2. Create an **OAuth 2.0 Client ID** (Web application)
-3. Add Authorised redirect URIs:
-   - `http://localhost:8000/auth/google/callback` (local)
-   - `https://your-domain.com/auth/google/callback` (production)
-4. Add to `.env`:
-
-```env
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_client_secret
-ALLOWED_GMAIL=you@gmail.com  # comma-separated; blank = any Google account
-```
-
-### User accounts
-
-Every user (registered or Google sign-in) gets their own row in the database. Per-user settings stored in the `users` table:
-
-- Pipeline schedule
-- Brand settings
-- Auto-post preferences
-- API keys (Gemini, OpenAI, Mailchimp)
+The **Pipeline** button in the top bar runs any step individually or the full pipeline end-to-end, with live status polling.
 
 ---
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and fill in the values below.
+Copy `.env.example` to `.env` and fill in the values.
 
 ### Required
 
 ```env
 GEMINI_API_KEY=your_gemini_key      # https://aistudio.google.com/apikey
-DASHBOARD_PASSWORD=change_me_now
-SECRET_KEY=<random 32-byte hex>     # python -c "import secrets; print(secrets.token_hex(32))"
-```
-
-### Authentication (optional but recommended)
-
-```env
-DASHBOARD_USERNAME=admin            # default: admin
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-ALLOWED_GMAIL=you@gmail.com
-```
-
-### Database
-
-```env
-# Default: SQLite file (users.db) — no setup needed for local dev
-# For production set DATABASE_URL to your Supabase / PostgreSQL connection string:
-DATABASE_URL=postgresql://postgres.[ref]:[password]@[host]:6543/postgres
 ```
 
 ### Cloud storage (Supabase)
@@ -173,11 +112,9 @@ GEMINI_MODEL=gemini-2.5-flash
 ## Project structure
 
 ```
-app.py                   Flask app factory — DB init, blueprint registration, scheduler
-models.py                SQLAlchemy User model with per-user preferences JSON
+app.py                   Flask app factory — blueprint registration, scheduler
 routes/
-  auth.py                Login, registration, Google OAuth callback
-  dashboard.py           Dashboard pages and settings API (per-user)
+  dashboard.py           Dashboard pages and settings API
   pipeline.py            Pipeline step endpoints (scrape, summarise, insights, TLP)
   tlp_insights.py        TLP & Insights page endpoints + generation trigger
   api.py                 Status API
@@ -191,9 +128,6 @@ static/
   js/app.js              Dashboard interactivity, pipeline polling, schedule UI
 templates/
   base.html              Sidebar nav, topbar, pipeline menu
-  auth/
-    login.html           Sign-in page (Google button + password form)
-    register.html        Registration page with password strength meter
   dashboard/
     _dashboard_page.html Overview metrics and recent activity
     _insights_page.html  Daily Insight file list
@@ -273,28 +207,13 @@ python app.py
 ### Vercel (serverless)
 
 - Set all env vars in the Vercel dashboard
-- `STORAGE_BACKEND=supabase` — Vercel has no persistent filesystem
-- `DATABASE_URL` → Supabase **Transaction pooler** connection string (port 6543)
-- `VERCEL=1` is set automatically; the app disables APScheduler and uses `NullPool`
+- Set `STORAGE_BACKEND=supabase` — Vercel has no persistent filesystem
+- `VERCEL=1` is set automatically; the app disables APScheduler
 
 ### Railway
 
-- `DATABASE_URL` → Supabase **Direct connection** string (port 5432) or Railway's own PostgreSQL
-- APScheduler runs as a background thread; the pipeline schedule set in the dashboard is respected
-
----
-
-## Database
-
-SQLite (`users.db`) is used by default — no configuration needed for local development.
-
-For production, set `DATABASE_URL` to any PostgreSQL connection string. Supabase is the recommended option:
-
-1. Supabase dashboard → **Settings → Database → Connection string → URI**
-2. Copy the **Transaction pooler** URI for Vercel, or **Direct connection** for Railway
-3. Set `DATABASE_URL` in your environment
-
-`db.create_all()` runs on app startup — the `users` table is created automatically.
+- APScheduler runs as a background thread
+- The pipeline schedule set in the dashboard is respected on restart
 
 ---
 
@@ -314,12 +233,10 @@ Test files: `tests/test_config.py`, `tests/test_scraper.py`, `tests/test_utils.p
 
 **No articles found** — Check `feeds.json`, RSS source availability, `TOPIC_KEYWORDS`, `ARTICLE_HOURS_LOOKBACK`, and `MIN_KEYWORD_MATCHES`.
 
-**Google sign-in fails** — Confirm the redirect URI in Google Cloud Console exactly matches `http(s)://your-domain/auth/google/callback`. On localhost use port 8000.
-
-**Database connection error (Supabase)** — Make sure `DATABASE_URL` uses `postgresql://` (not `postgres://`), and that the password doesn't contain unescaped special characters. SSL is added automatically.
-
-**TLP images missing** — Check `IMAGE_BACKEND`, `HF_API_TOKEN` (Hugging Face), or Gemini image model availability. The TLP formatter falls back to placeholders if image generation fails.
+**TLP images missing** — Check `IMAGE_BACKEND`, `HF_API_TOKEN` (Hugging Face), or Gemini image model availability. The TLP formatter falls back to placeholders if generation fails.
 
 **Template not found** — The following files must exist in the repo root:
 - `Exoasia_TLP_DailyInsight_Template.docx`
 - `Exoasia_TLP_ThoughtLeadership_Template.docx`
+
+**Schedule not firing** — APScheduler only runs on long-lived deployments (Railway, local). It is disabled on Vercel. Use the Manual Only option and trigger runs from the dashboard.

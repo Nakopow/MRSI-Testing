@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from flask import Blueprint, render_template, jsonify, redirect, request, session, url_for
+from flask import Blueprint, render_template, jsonify, request
 
 from main import TOPIC_LABELS, extract_posting_windows, load_tlp_payloads, parse_digest_sections
 from src.storage import storage
@@ -14,11 +14,6 @@ SAMPLE_OUTPUT_FILE = "sample_output.txt"
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
-
-@dashboard_bp.before_request
-def _require_login():
-    if not session.get("logged_in"):
-        return redirect(url_for("auth.login_page", next=request.path))
 PAGE_TITLES = {
     "dashboard": "Dashboard",
     "insights": "Daily Insights",
@@ -275,49 +270,28 @@ def settings():
     return _render_dashboard("settings")
 
 
-# ── Settings helpers (per-user from DB, file fallback) ───────────────────────
+# ── Settings Save Endpoints ──────────────────────────────────────────────────
 
 SETTINGS_FILE = ".dashboard_settings.json"
 
-_EMPTY_SETTINGS = lambda: {
-    "autopost": {},
-    "schedule": {"pipeline": [], "posting": []},
-    "brand": {},
-}
-
-
-def _current_user():
-    """Return the logged-in User ORM object, or None."""
-    user_id = session.get("user_id")
-    if not user_id:
-        return None
-    try:
-        from models import User
-        return User.query.get(user_id)
-    except Exception:
-        return None
-
 
 def _load_settings():
-    user = _current_user()
-    if user:
-        return user.get_settings()
+    """Load dashboard settings from file."""
     try:
         with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        return _EMPTY_SETTINGS()
+        return {
+            "autopost": {},
+            "schedule": {"pipeline": [], "posting": []},
+            "brand": {},
+        }
 
 
 def _save_settings(settings):
-    user = _current_user()
-    if user:
-        from models import db
-        user.save_settings(settings)
-        db.session.commit()
-    else:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=2)
+    """Save dashboard settings to file."""
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(settings, f, indent=2)
 
 
 @dashboard_bp.route("/autopost/save", methods=["POST"])
@@ -402,14 +376,6 @@ def save_api_keys():
         keys = {k: v for k, v in data["keys"].items() if v and str(v).strip()}
         if not keys:
             return jsonify({"success": False, "error": "No non-empty keys provided"}), 400
-
-        # Persist per-user in DB
-        user = _current_user()
-        if user:
-            from models import db
-            for key_name, value in keys.items():
-                user.set_api_key(key_name, value)
-            db.session.commit()
 
         # Also write to env so the pipeline picks them up this session
         for key_name, value in keys.items():
